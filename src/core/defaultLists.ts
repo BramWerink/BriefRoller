@@ -65,6 +65,14 @@ export const DEFAULT_LISTS: BriefListsState = {
     'Bunting',
     'Wall calendar',
     'Beer can',
+    'Flyer',
+    'Gift card',
+    'Mug',
+    'Seed packet',
+    'Vinyl sleeve',
+    'Skateboard deck',
+    'Van livery',
+    'Food truck wrap',
   ],
   client: [
     'Fish shop',
@@ -97,6 +105,8 @@ export const DEFAULT_LISTS: BriefListsState = {
     'Farmers market stall',
     'Observatory',
     'Barbershop',
+    'Coffee roaster',
+    'Bowling alley',
   ],
 };
 
