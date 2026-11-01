@@ -1,6 +1,6 @@
 import type { HistoryEntry, SlotId } from './types';
 
-export const HISTORY_LIMIT = 10;
+export const HISTORY_LIMIT = 50;
 
 export function pushHistoryEntry(
   history: HistoryEntry[],

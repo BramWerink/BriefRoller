@@ -17,9 +17,10 @@ describe('pushHistoryEntry', () => {
     expect(result[1].id).toBe('old');
   });
 
-  it('caps history at 10 entries, dropping the oldest', () => {
+  it('caps history at HISTORY_LIMIT entries, dropping the oldest', () => {
     let history: HistoryEntry[] = [];
-    for (let i = 0; i < 15; i++) {
+    const total = HISTORY_LIMIT + 5;
+    for (let i = 0; i < total; i++) {
       history = pushHistoryEntry(
         history,
         { style: 'Coastal', deliverable: 'Sticker', client: 'Fish shop' },
@@ -28,7 +29,7 @@ describe('pushHistoryEntry', () => {
       );
     }
     expect(history).toHaveLength(HISTORY_LIMIT);
-    expect(history[0].id).toBe('id-14');
-    expect(history[HISTORY_LIMIT - 1].id).toBe('id-5');
+    expect(history[0].id).toBe(`id-${total - 1}`);
+    expect(history[HISTORY_LIMIT - 1].id).toBe(`id-${total - HISTORY_LIMIT}`);
   });
 });
