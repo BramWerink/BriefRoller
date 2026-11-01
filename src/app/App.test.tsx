@@ -59,9 +59,10 @@ describe.each(listThemes().map((theme) => theme.id))('App (%s theme)', (themeId)
     expect(lock).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('disables locks while the slot is empty', () => {
+  it('opens on a rolled brief instead of empty slots', () => {
     render(<App />);
-    expect(screen.getByRole('button', { name: 'Lock style' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Lock style' })).toBeEnabled();
+    expect(screen.queryByText('—')).not.toBeInTheDocument();
   });
 
   it('copies the brief sentence to the clipboard', async () => {
@@ -139,6 +140,7 @@ describe.each(listThemes().map((theme) => theme.id))('App (%s theme)', (themeId)
   });
 
   it('lists history newest first, numbered from the oldest', async () => {
+    seedRolledState();
     const user = userEvent.setup();
     render(<App />);
 

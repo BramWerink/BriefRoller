@@ -7,14 +7,52 @@ function stubReducedMotion(matches: boolean) {
   window.matchMedia = vi.fn().mockReturnValue({ matches }) as unknown as typeof window.matchMedia;
 }
 
+/** A saved brief in every slot, so the hook doesn't roll on its own when it opens. */
+function seedFilledSlots() {
+  const state = createDefaultState();
+  state.slots.style = { value: 'Coastal', locked: false };
+  state.slots.deliverable = { value: 'Sticker', locked: false };
+  state.slots.client = { value: 'Fish shop', locked: false };
+  saveState(state);
+}
+
 describe('useBriefRoller', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     stubReducedMotion(false);
+    seedFilledSlots();
   });
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('rolls once on open when a slot has no value yet', () => {
+    saveState(createDefaultState());
+    const { result } = renderHook(() => useBriefRoller());
+    expect(result.current[0].isRolling).toBe(true);
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    const [vm] = result.current;
+    expect(vm.isRolling).toBe(false);
+    expect(vm.slots.style.value).not.toBeNull();
+    expect(vm.slots.deliverable.value).not.toBeNull();
+    expect(vm.slots.client.value).not.toBeNull();
+    expect(vm.history).toHaveLength(1);
+  });
+
+  it('keeps the saved brief on open when every slot has a value', () => {
+    const { result } = renderHook(() => useBriefRoller());
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(result.current[0].isRolling).toBe(false);
+    expect(result.current[0].briefText).toBe('Design a Coastal sticker for a fish shop');
+    expect(result.current[0].history).toHaveLength(0);
   });
 
   it('rolls every slot and pushes exactly one history entry per roll', () => {
@@ -122,6 +160,8 @@ describe('useBriefRoller', () => {
   it('restores history values but keeps current locks', () => {
     const state = createDefaultState();
     state.slots.style = { value: 'Coastal', locked: true };
+    state.slots.deliverable = { value: 'Sticker', locked: false };
+    state.slots.client = { value: 'Fish shop', locked: false };
     state.history = [
       {
         id: 'h1',
@@ -152,6 +192,9 @@ describe('useBriefRoller', () => {
   });
 
   it('does not lock an empty slot', () => {
+    const state = createDefaultState();
+    state.lists.style = [];
+    saveState(state);
     const { result } = renderHook(() => useBriefRoller());
     act(() => result.current[1].toggleLock('style'));
     expect(result.current[0].slots.style.locked).toBe(false);

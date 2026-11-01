@@ -143,6 +143,8 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
       // Interval and timeout ids share one pool, so clearInterval covers both.
       timers.current.forEach((id) => window.clearInterval(id));
       window.clearTimeout(copyTimer.current);
+      // A cancelled roll never finishes, so let a remount (StrictMode in dev) roll again.
+      rollingRef.current = false;
     },
     [],
   );
@@ -223,6 +225,12 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
       timers.current.push(timeoutId);
     });
   }, [apply, settleRollValues]);
+
+  // Open on a brief instead of empty slots: roll once at start if a slot has no value yet.
+  useEffect(() => {
+    const { lists, slots } = stateRef.current;
+    if (SLOT_IDS.some((id) => slots[id].value === null && lists[id].length > 0)) roll();
+  }, [roll]);
 
   const openPanel = useCallback((next: Panel) => setPanel(next), []);
   const closePanel = useCallback(() => setPanel('main'), []);
