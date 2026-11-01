@@ -1,7 +1,7 @@
 import type { SkinProps } from '../types';
 import { SlotRows } from './SlotRows';
-import { HistoryList } from './HistoryList';
-import { EditLists } from './EditLists';
+import { HistoryList } from '../shared/HistoryList';
+import { EditLists } from '../shared/EditLists';
 import styles from './plain.module.css';
 
 const PIN_UNAVAILABLE = 'Available in the desktop app';
@@ -59,9 +59,9 @@ export function PlainSkin({ vm, actions, layout }: SkinProps) {
       <div className={styles.body}>
         <section className={styles.screen} aria-label="Brief">
           {showEdit ? (
-            <EditLists vm={vm} actions={actions} />
+            <EditLists vm={vm} actions={actions} styles={styles} />
           ) : showHistoryPanel ? (
-            <HistoryList vm={vm} actions={actions} showBack />
+            <HistoryList vm={vm} actions={actions} styles={styles} showBack />
           ) : (
             <>
               <SlotRows vm={vm} actions={actions} />
@@ -74,7 +74,7 @@ export function PlainSkin({ vm, actions, layout }: SkinProps) {
 
         {isWide && (
           <aside className={styles.historyColumn} aria-label="History">
-            <HistoryList vm={vm} actions={actions} showBack={false} />
+            <HistoryList vm={vm} actions={actions} styles={styles} showBack={false} />
           </aside>
         )}
       </div>

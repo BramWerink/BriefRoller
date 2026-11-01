@@ -1,14 +1,11 @@
 import { formatHistoryLine } from '../../core';
-import type { BriefRollerActions, BriefRollerViewModel } from '../../state/types';
-import styles from './plain.module.css';
+import type { PanelProps } from './types';
 
-interface Props {
-  vm: BriefRollerViewModel;
-  actions: BriefRollerActions;
+interface Props extends PanelProps {
   showBack: boolean;
 }
 
-export function HistoryList({ vm, actions, showBack }: Props) {
+export function HistoryList({ vm, actions, styles, showBack }: Props) {
   return (
     <div className={styles.panel}>
       <h2 className={styles.panelTitle}>History</h2>

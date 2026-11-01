@@ -8,23 +8,43 @@ export function articleFor(word: string): 'a' | 'an' {
   return VOWEL_RE.test(word.trim()) ? 'an' : 'a';
 }
 
-export function buildBriefSentence(lists: BriefListsState, slots: SlotsState): string {
+/** A piece of the brief sentence; `slot` marks the words that came from that slot. */
+export interface BriefSegment {
+  text: string;
+  slot?: SlotId;
+}
+
+/** The brief split into pieces, so a skin can style each slot's words. */
+export function buildBriefSegments(lists: BriefListsState, slots: SlotsState): BriefSegment[] {
   const emptySlot = SLOT_IDS.find((id) => lists[id].length === 0);
   if (emptySlot) {
-    return `Add a ${emptySlot} first`;
+    return [{ text: `Add a ${emptySlot} first` }];
   }
 
   const style = slots.style.value;
   const deliverable = slots.deliverable.value;
   const client = slots.client.value;
   if (!style || !deliverable || !client) {
-    return '';
+    return [];
   }
 
   const deliverableLower = deliverable.toLowerCase();
   const clientLower = client.toLowerCase();
 
-  return `Design ${articleFor(style)} ${style} ${deliverableLower} for ${articleFor(clientLower)} ${clientLower}`;
+  return [
+    { text: `Design ${articleFor(style)} ` },
+    { text: style, slot: 'style' },
+    { text: ' ' },
+    { text: deliverableLower, slot: 'deliverable' },
+    { text: ` for ${articleFor(clientLower)} ` },
+    { text: clientLower, slot: 'client' },
+  ];
+}
+
+export function buildBriefSentence(lists: BriefListsState, slots: SlotsState): string {
+  return buildBriefSegments(lists, slots)
+    .map((segment) => segment.text)
+    .join('');
 }
 
 /** Short history line, e.g. "Coastal sticker · fish shop". */

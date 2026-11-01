@@ -1,14 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { MAX_ITEM_LENGTH, SLOT_IDS, slotLabel, type SlotId } from '../../core';
-import type { BriefRollerActions, BriefRollerViewModel } from '../../state/types';
-import styles from './plain.module.css';
+import type { PanelProps } from './types';
 
-interface Props {
-  vm: BriefRollerViewModel;
-  actions: BriefRollerActions;
-}
-
-export function EditLists({ vm, actions }: Props) {
+export function EditLists({ vm, actions, styles }: PanelProps) {
   const [tab, setTab] = useState<SlotId>('style');
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);

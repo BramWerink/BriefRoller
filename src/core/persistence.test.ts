@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { loadState, saveState, STORAGE_KEY } from './persistence';
-import { createDefaultState } from './defaultState';
+import { createDefaultState, DEFAULT_THEME_ID } from './defaultState';
 import { DEFAULT_LISTS } from './defaultLists';
 
 describe('persistence', () => {
@@ -65,7 +65,15 @@ describe('persistence', () => {
     expect(result.lists.client).toHaveLength(defaults.lists.client.length);
     expect(result.slots).toEqual(defaults.slots);
     expect(result.history).toEqual([]);
-    expect(result.themeId).toBe('plain');
+    expect(result.themeId).toBe(defaults.themeId);
     expect(result.pinned).toBe(defaults.pinned);
+  });
+
+  it('moves saves on the old default theme to the current default, and keeps others', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ themeId: 'plain' }));
+    expect(loadState().themeId).toBe(DEFAULT_THEME_ID);
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ themeId: 'some-future-theme' }));
+    expect(loadState().themeId).toBe('some-future-theme');
   });
 });

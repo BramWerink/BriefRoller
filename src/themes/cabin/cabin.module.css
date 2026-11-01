@@ -1,0 +1,553 @@
+/* Sizes follow the Figma design at 360 × 640. */
+
+.device {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  background-color: var(--br-device-bg);
+  /* Thin vertical pinstripes: 4px wide, every 25px. */
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0 4px,
+    var(--br-stripe) 4px 8px,
+    transparent 8px 25px
+  );
+  border-radius: var(--br-device-radius);
+}
+
+.mini {
+  max-width: 360px;
+  /* A fixed height, so long panels scroll inside their card instead of pushing Roll away. */
+  height: max(560px, min(640px, calc(100dvh - 2 * var(--br-stage-padding, 16px))));
+}
+
+.wide {
+  max-width: 720px;
+  min-height: 640px;
+}
+
+.device :focus-visible {
+  outline: 3px solid var(--br-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Header with a scalloped bottom edge: 8px half-circles, one every 16px. */
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--br-gap);
+  flex: none;
+  height: 64px;
+  margin-bottom: 8px;
+  padding: 0 var(--br-gutter);
+  background: var(--br-card-bg);
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 8px;
+  background: radial-gradient(circle at 50% 0, var(--br-card-bg) 7.5px, transparent 8px) 0 0 / 16px
+    8px repeat-x;
+}
+
+.title {
+  margin: 0;
+  padding-top: 6px;
+  font-family: var(--br-font-text);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.075em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.headerKeys {
+  display: flex;
+  gap: 2px;
+  margin-right: -6px;
+}
+
+.iconKey {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--br-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--br-radius);
+  cursor: pointer;
+}
+
+.iconKey:hover:not(:disabled) {
+  background: rgb(40 58 102 / 0.08);
+}
+
+.iconKey[aria-pressed='true'] {
+  color: var(--br-key-on-text);
+  background: var(--br-key-on-bg);
+}
+
+.iconKey:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  gap: var(--br-gutter);
+  min-height: 0;
+  padding: 31px var(--br-gutter) var(--br-gutter);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Slot cards */
+.slots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--br-gap);
+}
+
+.slot {
+  display: flex;
+  gap: var(--br-gap);
+  height: 75px;
+}
+
+.slotCard,
+.lockKey,
+.brief,
+.sheet {
+  background: var(--br-card-bg);
+  border-radius: var(--br-radius);
+  box-shadow: var(--br-card-shadow);
+}
+
+.slotCard {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6px var(--br-gutter) 2px;
+}
+
+.slotLabel {
+  font-family: var(--br-font-display);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  margin-bottom: -3px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--br-text-muted);
+}
+
+.slotValue {
+  font-family: var(--br-font-display);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slotValue[data-long] {
+  font-size: 26px;
+}
+
+.slotValue[data-rolling] {
+  opacity: 0.55;
+}
+
+.lockKey {
+  flex: 0 0 54px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--br-text);
+  border: none;
+  cursor: pointer;
+}
+
+.lockKey[aria-pressed='true'] {
+  color: var(--br-key-on-text);
+  background: var(--br-key-on-bg);
+}
+
+.lockKey:disabled {
+  cursor: not-allowed;
+  color: var(--br-text-muted);
+}
+
+/* Brief */
+.brief {
+  position: relative;
+  flex: none;
+  /* Buttons centre their content vertically; the brief starts at the top. */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 128px;
+  margin-top: 33px;
+  /* No bottom padding: three lines at the design size just fit the 128px card. */
+  padding: 8px var(--br-gutter) 0;
+  overflow: hidden;
+  text-align: left;
+  font-family: var(--br-font-text);
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 37.5px;
+  letter-spacing: -0.08em;
+  color: var(--br-text);
+  border: none;
+  cursor: pointer;
+}
+
+.brief[data-size='medium'] {
+  font-size: 27px;
+  line-height: 32px;
+}
+
+.brief[data-size='small'] {
+  font-size: 22px;
+  line-height: 26px;
+}
+
+.brief[data-size='tiny'] {
+  font-size: 17px;
+  line-height: 20px;
+}
+
+.brief:disabled {
+  cursor: default;
+}
+
+.briefText {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.brief[data-rolling] .briefText {
+  opacity: 0.5;
+}
+
+.briefText [data-slot='style'] {
+  color: var(--br-slot-style);
+}
+
+.briefText [data-slot='deliverable'] {
+  color: var(--br-slot-deliverable);
+}
+
+.briefText [data-slot='client'] {
+  color: var(--br-slot-client);
+}
+
+.briefPlaceholder {
+  opacity: 0.55;
+}
+
+.copyHint {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-family: var(--br-font-display);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--br-text);
+  opacity: 0;
+}
+
+.brief:hover:not(:disabled) .copyHint,
+.brief:focus-visible .copyHint {
+  opacity: 0.6;
+}
+
+.copyHint[data-copied] {
+  opacity: 1;
+}
+
+/* Roll */
+.rollKey {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  height: 74px;
+  /* At least 28px below the brief; any extra height goes here. */
+  margin-top: auto;
+  padding: 0;
+  font-family: var(--br-font-display);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.033em;
+  color: var(--br-roll-text);
+  background: var(--br-roll-bg);
+  border: none;
+  border-radius: 8px;
+  box-shadow: var(--br-card-shadow);
+  cursor: pointer;
+}
+
+.brief,
+.sheet {
+  margin-bottom: 28px;
+}
+
+/* Oswald sits low in its line box; this lines its caps up with the die. */
+.rollLabel {
+  margin-top: -5px;
+}
+
+.rollKey[data-pressed] {
+  transform: translateY(3px);
+  box-shadow: var(--br-card-shadow-pressed);
+  cursor: progress;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rollKey {
+    transition:
+      transform 60ms ease-out,
+      box-shadow 60ms ease-out;
+  }
+}
+
+/* History and edit-lists panels (class names used by ../shared) */
+.sheet {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--br-gutter);
+  overflow: hidden;
+}
+
+.historyColumn {
+  flex: 0 0 300px;
+  margin-bottom: 0;
+}
+
+.panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.panelTitle {
+  margin: 0;
+  font-family: var(--br-font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.panelActions {
+  display: flex;
+  gap: var(--br-gap);
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+.muted {
+  margin: 0;
+  font-size: 15px;
+  opacity: 0.6;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 12px;
+  font-family: var(--br-font-display);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--br-key-on-text);
+  background: var(--br-key-on-bg);
+  border: none;
+  border-radius: var(--br-radius);
+  cursor: pointer;
+}
+
+.key:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.key kbd {
+  font: inherit;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.historyList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.historyItem {
+  width: 100%;
+  padding: 8px 4px;
+  text-align: left;
+  font-family: var(--br-font-text);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--br-text);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgb(40 58 102 / 0.12);
+  cursor: pointer;
+}
+
+.historyItem:hover {
+  background: rgb(40 58 102 / 0.06);
+}
+
+.historyIndex {
+  font-family: var(--br-font-display);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.5;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  flex: 1;
+  padding: 6px 4px;
+  font-family: var(--br-font-display);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--br-text);
+  background: transparent;
+  border: 2px solid var(--br-text);
+  border-radius: var(--br-radius);
+  cursor: pointer;
+}
+
+.tab[aria-selected='true'] {
+  color: var(--br-key-on-text);
+  background: var(--br-key-on-bg);
+}
+
+.addForm {
+  display: flex;
+  gap: var(--br-gap);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  font-family: var(--br-font-text);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--br-text);
+  background: rgb(255 255 255 / 0.6);
+  border: 2px solid rgb(40 58 102 / 0.25);
+  border-radius: var(--br-radius);
+}
+
+.input:focus {
+  border-color: var(--br-text);
+}
+
+.error {
+  margin: 0;
+  min-height: 1em;
+  font-size: 13px;
+  color: var(--br-error-text);
+}
+
+.itemList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 2px 2px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  background: rgb(40 58 102 / 0.08);
+  border-radius: 999px;
+}
+
+.removeKey {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--br-text);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.removeKey:hover {
+  background: rgb(40 58 102 / 0.15);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

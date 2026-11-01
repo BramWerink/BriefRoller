@@ -15,9 +15,9 @@
         "label": "main",
         "title": "Brief Roller",
         "width": 360,
-        "height": 480,
+        "height": 640,
         "minWidth": 320,
-        "minHeight": 420,
+        "minHeight": 560,
         "resizable": true,
         "center": true
       }

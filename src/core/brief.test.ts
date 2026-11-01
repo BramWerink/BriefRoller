@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { articleFor, buildBriefSentence, formatHistoryLine } from './brief';
+import { articleFor, buildBriefSegments, buildBriefSentence, formatHistoryLine } from './brief';
 
 describe('formatHistoryLine', () => {
   it('keeps style casing and lowercases deliverable and client', () => {
@@ -70,5 +70,41 @@ describe('buildBriefSentence', () => {
       client: { value: null, locked: false },
     };
     expect(buildBriefSentence(lists, slots)).toBe('');
+  });
+});
+
+describe('buildBriefSegments', () => {
+  const lists: BriefListsState = {
+    style: ['Art Deco'],
+    deliverable: ['Poster'],
+    client: ['Ice cream van'],
+  };
+
+  it('tags each slot word with its slot, matching the sentence casing', () => {
+    const slots: SlotsState = {
+      style: { value: 'Art Deco', locked: false },
+      deliverable: { value: 'Poster', locked: false },
+      client: { value: 'Ice cream van', locked: false },
+    };
+    expect(buildBriefSegments(lists, slots)).toEqual([
+      { text: 'Design an ' },
+      { text: 'Art Deco', slot: 'style' },
+      { text: ' ' },
+      { text: 'poster', slot: 'deliverable' },
+      { text: ' for an ' },
+      { text: 'ice cream van', slot: 'client' },
+    ]);
+  });
+
+  it('returns a single untagged prompt when a list is empty', () => {
+    const slots: SlotsState = {
+      style: { value: null, locked: false },
+      deliverable: { value: null, locked: false },
+      client: { value: null, locked: false },
+    };
+    expect(buildBriefSegments({ ...lists, deliverable: [] }, slots)).toEqual([
+      { text: 'Add a deliverable first' },
+    ]);
+    expect(buildBriefSegments(lists, slots)).toEqual([]);
   });
 });

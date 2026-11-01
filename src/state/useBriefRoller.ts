@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
+  buildBriefSegments,
   buildBriefSentence,
   loadState,
   saveState,
@@ -329,6 +330,7 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
     isRolling,
     rollingSlots,
     briefText: buildBriefSentence(state.lists, state.slots),
+    briefSegments: buildBriefSegments(state.lists, state.slots),
     canCopy:
       !isRolling &&
       SLOT_IDS.every((id) => state.lists[id].length > 0 && state.slots[id].value !== null),

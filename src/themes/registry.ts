@@ -1,9 +1,10 @@
 import type { ThemeDefinition } from './types';
+import { DEFAULT_THEME_ID } from '../core';
+import { cabinTheme } from './cabin';
 import { plainTheme } from './plain';
 
-export const DEFAULT_THEME_ID = plainTheme.id;
-
 const themes: Record<string, ThemeDefinition> = {
+  [cabinTheme.id]: cabinTheme,
   [plainTheme.id]: plainTheme,
 };
 

@@ -1,4 +1,11 @@
-import type { AddListItemResult, HistoryEntry, SlotId, SlotsState, BriefListsState } from '../core';
+import type {
+  AddListItemResult,
+  BriefSegment,
+  HistoryEntry,
+  SlotId,
+  SlotsState,
+  BriefListsState,
+} from '../core';
 
 export type Panel = 'main' | 'history' | 'edit';
 
@@ -13,6 +20,8 @@ export interface BriefRollerViewModel {
   isRolling: boolean;
   rollingSlots: Record<SlotId, boolean>;
   briefText: string;
+  /** `briefText` in pieces, with each slot's words tagged, for skins that style them. */
+  briefSegments: BriefSegment[];
   /** True when every slot has a value, so the brief is a full sentence. */
   canCopy: boolean;
   rollCount: number;

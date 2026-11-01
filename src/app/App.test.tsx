@@ -2,7 +2,16 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
-import { createDefaultState, saveState } from '../core';
+import { createDefaultState, saveState, type PersistedStateV1 } from '../core';
+import { listThemes } from '../themes/registry';
+
+// Every theme runs the same tests. Saved state can't select a theme (an old 'plain' save
+// moves to the default), so the registry is told which theme to hand out instead.
+const forcedTheme = vi.hoisted(() => ({ id: '' }));
+vi.mock('../themes/registry', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../themes/registry')>();
+  return { ...actual, getTheme: () => actual.getTheme(forcedTheme.id) };
+});
 
 function stubMatchMedia({ wide = false, reducedMotion = true } = {}) {
   window.matchMedia = vi.fn((query: string) => ({
@@ -12,16 +21,24 @@ function stubMatchMedia({ wide = false, reducedMotion = true } = {}) {
   })) as unknown as typeof window.matchMedia;
 }
 
-function seedRolledState() {
+function seedState(change: (state: PersistedStateV1) => void) {
   const state = createDefaultState();
-  state.slots.style = { value: 'Art Deco', locked: false };
-  state.slots.deliverable = { value: 'Poster', locked: false };
-  state.slots.client = { value: 'Ice cream van', locked: false };
+  change(state);
   saveState(state);
 }
 
-describe('App (plain theme)', () => {
+function seedRolledState() {
+  seedState((state) => {
+    state.slots.style = { value: 'Art Deco', locked: false };
+    state.slots.deliverable = { value: 'Poster', locked: false };
+    state.slots.client = { value: 'Ice cream van', locked: false };
+  });
+}
+
+describe.each(listThemes().map((theme) => theme.id))('App (%s theme)', (themeId) => {
   beforeEach(() => {
+    forcedTheme.id = themeId;
+    localStorage.clear();
     stubMatchMedia();
   });
 
@@ -99,15 +116,16 @@ describe('App (plain theme)', () => {
 
     act(() => lock.blur());
     await user.keyboard(' ');
-    expect(screen.getByText('Art Deco')).toBeInTheDocument();
+    // The locked style stays; a theme may also show it inside the brief sentence.
+    expect(screen.getAllByText('Art Deco').length).toBeGreaterThan(0);
     expect(screen.queryByText('Poster')).not.toBeInTheDocument();
   });
 
   it('shows an add-first prompt when a list is emptied', async () => {
-    const state = createDefaultState();
-    state.lists.client = ['Bakery'];
-    state.slots.client = { value: 'Bakery', locked: false };
-    saveState(state);
+    seedState((state) => {
+      state.lists.client = ['Bakery'];
+      state.slots.client = { value: 'Bakery', locked: false };
+    });
     const user = userEvent.setup();
     render(<App />);
 

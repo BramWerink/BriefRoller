@@ -1,0 +1,59 @@
+/*
+ * "The Design Cabin" — from the Figma design (360 × 640).
+ * Two layers: primitives (raw values) -> semantic (what the skin reads).
+ */
+[data-theme='cabin'] {
+  /* Primitives */
+  --cabin-cream: #f5efe3;
+  --cabin-navy: #283a66;
+  --cabin-red: #8d2a2d;
+  --cabin-red-dark: #6a2022;
+  --cabin-green: #276f5e;
+  --cabin-gold: #b78426;
+  --cabin-gray: #c2c2c3;
+  --cabin-stripe: rgb(255 255 255 / 0.1);
+
+  /* Semantic */
+  --br-page-bg: #e9e3d8;
+  --br-device-bg: var(--cabin-red);
+  --br-stripe: var(--cabin-stripe);
+  --br-card-bg: var(--cabin-cream);
+  --br-card-shadow: 0 4px 0 var(--cabin-red-dark);
+  --br-card-shadow-pressed: 0 1px 0 var(--cabin-red-dark);
+  --br-text: var(--cabin-navy);
+  --br-text-muted: var(--cabin-gray);
+  --br-key-on-bg: var(--cabin-navy);
+  --br-key-on-text: var(--cabin-cream);
+  --br-roll-bg: var(--cabin-navy);
+  --br-roll-text: var(--cabin-cream);
+  --br-slot-style: var(--cabin-red);
+  --br-slot-deliverable: var(--cabin-green);
+  --br-slot-client: var(--cabin-gold);
+  --br-focus-ring: var(--cabin-gold);
+  --br-error-text: var(--cabin-red);
+
+  --br-font-display: 'Oswald', 'Arial Narrow', sans-serif;
+  --br-font-text: 'Karla', system-ui, sans-serif;
+  --br-radius: 6px;
+  --br-device-radius: 20px;
+  --br-gap: 8px;
+  --br-gutter: 16px;
+
+  background: var(--br-page-bg);
+  color: var(--br-text);
+  font-family: var(--br-font-text);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='cabin'] {
+    --br-page-bg: #1b1d24;
+  }
+}
+
+/* In a window about the size of the design, the cabin fills it edge to edge. */
+@media (max-width: 400px) {
+  [data-theme='cabin'] {
+    --br-stage-padding: 0px;
+    --br-device-radius: 0px;
+  }
+}

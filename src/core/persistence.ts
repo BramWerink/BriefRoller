@@ -6,6 +6,13 @@ import { mergeNewDefaults } from './lists';
 
 export const STORAGE_KEY = 'brief-roller:state:v1';
 
+/**
+ * The default theme before Cabin. There has never been a theme picker, so a saved 'plain'
+ * only means "the default back then" — those saves move to the current default.
+ * If a picker is ever added, remove this so a chosen 'plain' sticks.
+ */
+const LEGACY_DEFAULT_THEME_ID = 'plain';
+
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
@@ -94,7 +101,10 @@ export function loadState(): PersistedStateV1 {
       knownDefaults,
       slots: sanitizeSlots(parsed.slots),
       history: sanitizeHistory(parsed.history),
-      themeId: typeof parsed.themeId === 'string' ? parsed.themeId : fallback.themeId,
+      themeId:
+        typeof parsed.themeId === 'string' && parsed.themeId !== LEGACY_DEFAULT_THEME_ID
+          ? parsed.themeId
+          : fallback.themeId,
       pinned: typeof parsed.pinned === 'boolean' ? parsed.pinned : fallback.pinned,
     };
   } catch {
