@@ -1,0 +1,64 @@
+/*
+ * Two layers: primitives (raw values) -> semantic (what skins read).
+ * Skins only reference semantic tokens, so a theme can re-map them freely.
+ */
+[data-theme='plain'] {
+  /* Primitives */
+  --br-gray-50: #f8f8f6;
+  --br-gray-100: #efefec;
+  --br-gray-300: #c9c9c4;
+  --br-gray-600: #5c5c58;
+  --br-gray-900: #1c1c1a;
+  --br-white: #ffffff;
+  --br-red-600: #b53a2b;
+  --br-green-700: #23664f;
+
+  /* Semantic */
+  --br-page-bg: var(--br-gray-100);
+  --br-surface-bg: var(--br-white);
+  --br-surface-border: var(--br-gray-300);
+  --br-text: var(--br-gray-900);
+  --br-text-muted: var(--br-gray-600);
+  --br-slot-bg: var(--br-gray-50);
+  --br-key-bg: var(--br-white);
+  --br-key-text: var(--br-gray-900);
+  --br-key-border: var(--br-gray-300);
+  --br-key-on-bg: var(--br-gray-900);
+  --br-key-on-text: var(--br-white);
+  --br-roll-bg: var(--br-red-600);
+  --br-roll-text: var(--br-white);
+  --br-copy-bg: var(--br-green-700);
+  --br-copy-text: var(--br-white);
+  --br-brief-bg: var(--br-gray-900);
+  --br-brief-text: var(--br-white);
+  --br-focus-ring: var(--br-red-600);
+  --br-error-text: var(--br-red-600);
+
+  --br-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --br-radius: 8px;
+  --br-gap: 10px;
+
+  background: var(--br-page-bg);
+  color: var(--br-text);
+  font-family: var(--br-font);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='plain'] {
+    --br-page-bg: #121211;
+    --br-surface-bg: #1d1d1b;
+    --br-surface-border: #3a3a37;
+    --br-text: #ecece8;
+    --br-text-muted: #a3a39d;
+    --br-slot-bg: #262624;
+    --br-key-bg: #262624;
+    --br-key-text: #ecece8;
+    --br-key-border: #3a3a37;
+    --br-key-on-bg: #ecece8;
+    --br-key-on-text: #121211;
+    --br-brief-bg: #ecece8;
+    --br-brief-text: #121211;
+    --br-focus-ring: #f08a6c;
+    --br-error-text: #f08a6c;
+  }
+}

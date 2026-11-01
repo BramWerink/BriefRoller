@@ -1,0 +1,28 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+.app-root {
+  min-height: 100dvh;
+}
+
+.app-stage {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px;
+}
+
+@media (min-height: 560px) {
+  .app-stage {
+    align-items: center;
+    min-height: 100dvh;
+  }
+}
