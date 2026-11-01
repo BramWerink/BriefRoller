@@ -1,6 +1,6 @@
 [package]
 name = "brief-roller"
-version = "0.1.0"
+version = "0.2.0"
 description = "Rolls random design briefs"
 authors = ["Bram Werink"]
 license = "MIT"
