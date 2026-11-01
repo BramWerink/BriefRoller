@@ -1,11 +1,13 @@
 /* Sizes follow the Figma design at 360 × 640. */
 
+/* Fills the whole window. A fixed height, so long panels scroll inside their card
+   instead of pushing Roll away; below 560px tall the page scrolls instead. */
 .device {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   width: 100%;
-  margin: 0 auto;
+  height: max(560px, 100dvh);
   overflow: hidden;
   background-color: var(--br-device-bg);
   /* Thin vertical pinstripes: 4px wide, every 25px. */
@@ -15,18 +17,6 @@
     var(--br-stripe) 4px 8px,
     transparent 8px 25px
   );
-  border-radius: var(--br-device-radius);
-}
-
-.mini {
-  max-width: 360px;
-  /* A fixed height, so long panels scroll inside their card instead of pushing Roll away. */
-  height: max(560px, min(640px, calc(100dvh - 2 * var(--br-stage-padding, 16px))));
-}
-
-.wide {
-  max-width: 720px;
-  min-height: 640px;
 }
 
 .device :focus-visible {
@@ -44,7 +34,7 @@
   flex: none;
   height: 64px;
   margin-bottom: 8px;
-  padding: 0 var(--br-gutter);
+  padding: 0 var(--br-inline-pad);
   background: var(--br-card-bg);
 }
 
@@ -108,7 +98,7 @@
   display: flex;
   gap: var(--br-gutter);
   min-height: 0;
-  padding: 31px var(--br-gutter) var(--br-gutter);
+  padding: 31px var(--br-inline-pad) var(--br-gutter);
 }
 
 .main {
@@ -351,7 +341,7 @@
 }
 
 .historyColumn {
-  flex: 0 0 300px;
+  flex: 0 0 clamp(300px, 32%, 420px);
   margin-bottom: 0;
 }
 

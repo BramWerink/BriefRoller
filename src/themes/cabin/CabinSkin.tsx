@@ -14,7 +14,7 @@ export function CabinSkin({ vm, actions, layout }: SkinProps) {
   const showEdit = vm.panel === 'edit';
 
   return (
-    <div className={`${styles.device} ${isWide ? styles.wide : styles.mini}`}>
+    <div className={styles.device}>
       <header className={styles.header}>
         <h1 className={styles.title}>The Design Cabin</h1>
         <nav className={styles.headerKeys} aria-label="Panels">

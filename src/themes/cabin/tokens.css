@@ -14,7 +14,7 @@
   --cabin-stripe: rgb(255 255 255 / 0.1);
 
   /* Semantic */
-  --br-page-bg: #e9e3d8;
+  --br-page-bg: var(--cabin-red);
   --br-device-bg: var(--cabin-red);
   --br-stripe: var(--cabin-stripe);
   --br-card-bg: var(--cabin-cream);
@@ -35,25 +35,16 @@
   --br-font-display: 'Oswald', 'Arial Narrow', sans-serif;
   --br-font-text: 'Karla', system-ui, sans-serif;
   --br-radius: 6px;
-  --br-device-radius: 20px;
   --br-gap: 8px;
   --br-gutter: 16px;
+  --br-content-max: 1200px;
+  /* Side padding that keeps content within --br-content-max, centred, while the
+     background still fills the window. Never less than the gutter. */
+  --br-inline-pad: max(var(--br-gutter), calc((100% - var(--br-content-max)) / 2));
+  /* The cabin fills the whole window, edge to edge. */
+  --br-stage-padding: 0px;
 
   background: var(--br-page-bg);
   color: var(--br-text);
   font-family: var(--br-font-text);
-}
-
-@media (prefers-color-scheme: dark) {
-  [data-theme='cabin'] {
-    --br-page-bg: #1b1d24;
-  }
-}
-
-/* In a window about the size of the design, the cabin fills it edge to edge. */
-@media (max-width: 400px) {
-  [data-theme='cabin'] {
-    --br-stage-padding: 0px;
-    --br-device-radius: 0px;
-  }
 }
