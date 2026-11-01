@@ -32,13 +32,31 @@ export function buildBriefSegments(lists: BriefListsState, slots: SlotsState): B
   const clientLower = client.toLowerCase();
 
   return [
-    { text: `Design ${articleFor(style)} ` },
-    { text: style, slot: 'style' },
-    { text: ' ' },
+    { text: `Design ${articleFor(deliverableLower)} ` },
     { text: deliverableLower, slot: 'deliverable' },
-    { text: ` for ${articleFor(clientLower)} ` },
+    { text: ' in ' },
+    { text: style, slot: 'style' },
+    { text: ` style for ${articleFor(clientLower)} ` },
     { text: clientLower, slot: 'client' },
   ];
+}
+
+/** The leading `maxLength` characters of `segments`, trimming the segment that straddles the cut. */
+export function sliceBriefSegments(segments: BriefSegment[], maxLength: number): BriefSegment[] {
+  const result: BriefSegment[] = [];
+  let used = 0;
+  for (const segment of segments) {
+    if (used >= maxLength) break;
+    const remaining = maxLength - used;
+    if (segment.text.length <= remaining) {
+      result.push(segment);
+      used += segment.text.length;
+    } else {
+      result.push({ ...segment, text: segment.text.slice(0, remaining) });
+      used = maxLength;
+    }
+  }
+  return result;
 }
 
 export function buildBriefSentence(lists: BriefListsState, slots: SlotsState): string {

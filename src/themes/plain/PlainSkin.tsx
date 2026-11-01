@@ -2,6 +2,7 @@ import type { SkinProps } from '../types';
 import { SlotRows } from './SlotRows';
 import { HistoryList } from '../shared/HistoryList';
 import { EditLists } from '../shared/EditLists';
+import { useTypewriter } from '../shared/useTypewriter';
 import styles from './plain.module.css';
 
 const PIN_UNAVAILABLE = 'Available in the desktop app';
@@ -11,11 +12,13 @@ export function PlainSkin({ vm, actions, layout }: SkinProps) {
   const showHistoryPanel = vm.panel === 'history' && !isWide;
   const showEdit = vm.panel === 'edit';
 
+  const revealLength = useTypewriter(vm.briefText);
+  const typedBrief = vm.briefText.slice(0, revealLength);
   const briefLine = vm.justCopied
     ? 'Copied!'
     : vm.isRolling
       ? 'Rolling…'
-      : vm.briefText || 'Press Roll for a brief';
+      : typedBrief || 'Press Roll for a brief';
 
   return (
     <div className={`${styles.device} ${isWide ? styles.wide : styles.mini}`}>

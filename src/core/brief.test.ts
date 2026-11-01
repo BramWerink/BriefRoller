@@ -36,17 +36,19 @@ describe('buildBriefSentence', () => {
       deliverable: { value: 'Sticker', locked: false },
       client: { value: 'Fish shop', locked: false },
     };
-    expect(buildBriefSentence(lists, slots)).toBe('Design a Coastal sticker for a fish shop');
+    expect(buildBriefSentence(lists, slots)).toBe(
+      'Design a sticker in Coastal style for a fish shop',
+    );
   });
 
-  it('uses "an" when style or client is vowel-initial', () => {
+  it('uses "an" when deliverable or client is vowel-initial', () => {
     const slots: SlotsState = {
       style: { value: 'Art Deco', locked: false },
-      deliverable: { value: 'Poster', locked: false },
+      deliverable: { value: 'Enamel pin', locked: false },
       client: { value: 'Ice cream van', locked: false },
     };
     expect(buildBriefSentence(lists, slots)).toBe(
-      'Design an Art Deco poster for an ice cream van',
+      'Design an enamel pin in Art Deco style for an ice cream van',
     );
   });
 
@@ -87,11 +89,11 @@ describe('buildBriefSegments', () => {
       client: { value: 'Ice cream van', locked: false },
     };
     expect(buildBriefSegments(lists, slots)).toEqual([
-      { text: 'Design an ' },
-      { text: 'Art Deco', slot: 'style' },
-      { text: ' ' },
+      { text: 'Design a ' },
       { text: 'poster', slot: 'deliverable' },
-      { text: ' for an ' },
+      { text: ' in ' },
+      { text: 'Art Deco', slot: 'style' },
+      { text: ' style for an ' },
       { text: 'ice cream van', slot: 'client' },
     ]);
   });

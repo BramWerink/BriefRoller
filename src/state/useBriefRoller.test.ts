@@ -51,7 +51,7 @@ describe('useBriefRoller', () => {
     });
 
     expect(result.current[0].isRolling).toBe(false);
-    expect(result.current[0].briefText).toBe('Design a Coastal sticker for a fish shop');
+    expect(result.current[0].briefText).toBe('Design a sticker in Coastal style for a fish shop');
     expect(result.current[0].history).toHaveLength(0);
   });
 

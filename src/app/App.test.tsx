@@ -73,7 +73,7 @@ describe.each(listThemes().map((theme) => theme.id))('App (%s theme)', (themeId)
 
     await user.click(screen.getByRole('button', { name: /copy/i }));
 
-    expect(writeText).toHaveBeenCalledWith('Design an Art Deco poster for an ice cream van');
+    expect(writeText).toHaveBeenCalledWith('Design a poster in Art Deco style for an ice cream van');
     expect(await screen.findByText('Copied!')).toBeInTheDocument();
   });
 
