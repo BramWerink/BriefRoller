@@ -4,7 +4,7 @@ export const HISTORY_LIMIT = 50;
 
 export function pushHistoryEntry(
   history: HistoryEntry[],
-  values: Record<SlotId, string>,
+  values: Partial<Record<SlotId, string>>,
   makeId: () => string = () => crypto.randomUUID(),
   rolledAt: number = Date.now(),
 ): HistoryEntry[] {

@@ -55,5 +55,6 @@ export function resetAllLists(): BriefListsState {
     style: resetList('style'),
     deliverable: resetList('deliverable'),
     client: resetList('client'),
+    company: resetList('company'),
   };
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { articleFor, buildBriefSegments, buildBriefSentence, formatHistoryLine } from './brief';
+import type { SlotsState, BriefListsState } from './types';
 
 describe('formatHistoryLine', () => {
   it('keeps style casing and lowercases deliverable and client', () => {
@@ -7,8 +8,18 @@ describe('formatHistoryLine', () => {
       formatHistoryLine({ style: 'Art Deco', deliverable: 'Tote bag', client: 'Fish shop' }),
     ).toBe('Art Deco tote bag · fish shop');
   });
+
+  it('inserts the company name, unchanged, between deliverable and client', () => {
+    expect(
+      formatHistoryLine({
+        style: 'Art Deco',
+        deliverable: 'Tote bag',
+        client: 'Fish shop',
+        company: 'Northlane',
+      }),
+    ).toBe('Art Deco tote bag · Northlane · fish shop');
+  });
 });
-import type { SlotsState, BriefListsState } from './types';
 
 describe('articleFor', () => {
   it('uses "an" before a vowel-initial word', () => {
@@ -28,6 +39,7 @@ describe('buildBriefSentence', () => {
     style: ['Coastal'],
     deliverable: ['Sticker'],
     client: ['Fish shop'],
+    company: ['Northlane'],
   };
 
   it('builds the sentence with correct articles and casing', () => {
@@ -35,6 +47,7 @@ describe('buildBriefSentence', () => {
       style: { value: 'Coastal', locked: false },
       deliverable: { value: 'Sticker', locked: false },
       client: { value: 'Fish shop', locked: false },
+      company: { value: null, locked: false },
     };
     expect(buildBriefSentence(lists, slots)).toBe(
       'Design a sticker in Coastal style for a fish shop',
@@ -46,6 +59,7 @@ describe('buildBriefSentence', () => {
       style: { value: 'Art Deco', locked: false },
       deliverable: { value: 'Enamel pin', locked: false },
       client: { value: 'Ice cream van', locked: false },
+      company: { value: null, locked: false },
     };
     expect(buildBriefSentence(lists, slots)).toBe(
       'Design an enamel pin in Art Deco style for an ice cream van',
@@ -57,6 +71,7 @@ describe('buildBriefSentence', () => {
       style: { value: null, locked: false },
       deliverable: { value: 'Sticker', locked: false },
       client: { value: 'Fish shop', locked: false },
+      company: { value: null, locked: false },
     };
     const emptyStyleLists: BriefListsState = { ...lists, style: [] };
     expect(buildBriefSentence(emptyStyleLists, slots)).toBe('Add a style first');
@@ -70,8 +85,53 @@ describe('buildBriefSentence', () => {
       style: { value: null, locked: false },
       deliverable: { value: null, locked: false },
       client: { value: null, locked: false },
+      company: { value: null, locked: false },
     };
     expect(buildBriefSentence(lists, slots)).toBe('');
+  });
+
+  it('ignores the company slot when disabled, even with an empty company list', () => {
+    const slots: SlotsState = {
+      style: { value: 'Coastal', locked: false },
+      deliverable: { value: 'Sticker', locked: false },
+      client: { value: 'Fish shop', locked: false },
+      company: { value: null, locked: false },
+    };
+    expect(buildBriefSentence({ ...lists, company: [] }, slots, false)).toBe(
+      'Design a sticker in Coastal style for a fish shop',
+    );
+  });
+
+  it('names the company ahead of the client when enabled', () => {
+    const slots: SlotsState = {
+      style: { value: 'Coastal', locked: false },
+      deliverable: { value: 'Sticker', locked: false },
+      client: { value: 'Fish shop', locked: false },
+      company: { value: 'Northlane', locked: false },
+    };
+    expect(buildBriefSentence(lists, slots, true)).toBe(
+      'Design a sticker in Coastal style for Northlane, a fish shop',
+    );
+  });
+
+  it('is blank while enabled but the company has not rolled yet', () => {
+    const slots: SlotsState = {
+      style: { value: 'Coastal', locked: false },
+      deliverable: { value: 'Sticker', locked: false },
+      client: { value: 'Fish shop', locked: false },
+      company: { value: null, locked: false },
+    };
+    expect(buildBriefSentence(lists, slots, true)).toBe('');
+  });
+
+  it('prompts to add a company first when enabled and its list is empty', () => {
+    const slots: SlotsState = {
+      style: { value: 'Coastal', locked: false },
+      deliverable: { value: 'Sticker', locked: false },
+      client: { value: 'Fish shop', locked: false },
+      company: { value: null, locked: false },
+    };
+    expect(buildBriefSentence({ ...lists, company: [] }, slots, true)).toBe('Add a company first');
   });
 });
 
@@ -80,6 +140,7 @@ describe('buildBriefSegments', () => {
     style: ['Art Deco'],
     deliverable: ['Poster'],
     client: ['Ice cream van'],
+    company: ['Northlane'],
   };
 
   it('tags each slot word with its slot, matching the sentence casing', () => {
@@ -87,13 +148,15 @@ describe('buildBriefSegments', () => {
       style: { value: 'Art Deco', locked: false },
       deliverable: { value: 'Poster', locked: false },
       client: { value: 'Ice cream van', locked: false },
+      company: { value: null, locked: false },
     };
     expect(buildBriefSegments(lists, slots)).toEqual([
       { text: 'Design a ' },
       { text: 'poster', slot: 'deliverable' },
       { text: ' in ' },
       { text: 'Art Deco', slot: 'style' },
-      { text: ' style for an ' },
+      { text: ' style for ' },
+      { text: 'an ' },
       { text: 'ice cream van', slot: 'client' },
     ]);
   });
@@ -103,10 +166,30 @@ describe('buildBriefSegments', () => {
       style: { value: null, locked: false },
       deliverable: { value: null, locked: false },
       client: { value: null, locked: false },
+      company: { value: null, locked: false },
     };
     expect(buildBriefSegments({ ...lists, deliverable: [] }, slots)).toEqual([
       { text: 'Add a deliverable first' },
     ]);
     expect(buildBriefSegments(lists, slots)).toEqual([]);
+  });
+
+  it('tags the company name and keeps it ahead of the client', () => {
+    const slots: SlotsState = {
+      style: { value: 'Art Deco', locked: false },
+      deliverable: { value: 'Poster', locked: false },
+      client: { value: 'Ice cream van', locked: false },
+      company: { value: 'Northlane', locked: false },
+    };
+    expect(buildBriefSegments(lists, slots, true)).toEqual([
+      { text: 'Design a ' },
+      { text: 'poster', slot: 'deliverable' },
+      { text: ' in ' },
+      { text: 'Art Deco', slot: 'style' },
+      { text: ' style for ' },
+      { text: 'Northlane', slot: 'company' },
+      { text: ', an ' },
+      { text: 'ice cream van', slot: 'client' },
+    ]);
   });
 });

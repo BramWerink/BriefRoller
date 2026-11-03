@@ -303,6 +303,14 @@ kbd {
   font-size: 13px;
 }
 
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
 .addForm {
   display: flex;
   gap: 6px;

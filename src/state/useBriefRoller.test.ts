@@ -7,12 +7,17 @@ function stubReducedMotion(matches: boolean) {
   window.matchMedia = vi.fn().mockReturnValue({ matches }) as unknown as typeof window.matchMedia;
 }
 
-/** A saved brief in every slot, so the hook doesn't roll on its own when it opens. */
+/**
+ * A saved brief in every active slot, so the hook doesn't roll on its own when it opens.
+ * Company is off here — these tests are about the core three slots; see the dedicated
+ * "company name" tests below for companyEnabled: true.
+ */
 function seedFilledSlots() {
   const state = createDefaultState();
   state.slots.style = { value: 'Coastal', locked: false };
   state.slots.deliverable = { value: 'Sticker', locked: false };
   state.slots.client = { value: 'Fish shop', locked: false };
+  state.companyEnabled = false;
   saveState(state);
 }
 
@@ -33,7 +38,8 @@ describe('useBriefRoller', () => {
     expect(result.current[0].isRolling).toBe(true);
 
     act(() => {
-      vi.advanceTimersByTime(1000);
+      // Company is on by default and settles last; give every slot time to finish.
+      vi.advanceTimersByTime(1100);
     });
 
     const [vm] = result.current;
@@ -90,6 +96,7 @@ describe('useBriefRoller', () => {
       style: false,
       deliverable: true,
       client: true,
+      company: false,
     });
 
     act(() => {
@@ -99,6 +106,7 @@ describe('useBriefRoller', () => {
       style: false,
       deliverable: false,
       client: true,
+      company: false,
     });
   });
 
@@ -132,6 +140,7 @@ describe('useBriefRoller', () => {
     state.slots.style = { value: 'Coastal', locked: false };
     state.slots.deliverable = { value: 'Sticker', locked: false };
     state.slots.client = { value: 'Fish shop', locked: false };
+    state.companyEnabled = false;
     saveState(state);
 
     const { result } = renderHook(() => useBriefRoller());
@@ -162,6 +171,7 @@ describe('useBriefRoller', () => {
     state.slots.style = { value: 'Coastal', locked: true };
     state.slots.deliverable = { value: 'Sticker', locked: false };
     state.slots.client = { value: 'Fish shop', locked: false };
+    state.companyEnabled = false;
     state.history = [
       {
         id: 'h1',

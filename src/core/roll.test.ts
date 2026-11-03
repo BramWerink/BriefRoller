@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { pickExcluding, rollUnlockedSlots } from './roll';
-import type { SlotsState, BriefListsState } from './types';
+import type { SlotId, SlotsState, BriefListsState } from './types';
+
+const CORE_IDS: SlotId[] = ['style', 'deliverable', 'client'];
 
 describe('pickExcluding', () => {
   it('never returns the excluded value when the list has more than one item', () => {
@@ -30,6 +32,7 @@ describe('rollUnlockedSlots', () => {
     style: ['Coastal', 'Brutalist'],
     deliverable: ['Sticker', 'Poster'],
     client: ['Fish shop', 'Bakery'],
+    company: ['Northlane', 'Verve'],
   };
 
   it('leaves locked slots untouched', () => {
@@ -37,8 +40,9 @@ describe('rollUnlockedSlots', () => {
       style: { value: 'Coastal', locked: true },
       deliverable: { value: 'Sticker', locked: false },
       client: { value: 'Fish shop', locked: true },
+      company: { value: 'Northlane', locked: false },
     };
-    const result = rollUnlockedSlots(lists, slots, () => 0.9);
+    const result = rollUnlockedSlots(lists, slots, CORE_IDS, () => 0.9);
     expect(result.style).toBe('Coastal');
     expect(result.client).toBe('Fish shop');
   });
@@ -48,10 +52,33 @@ describe('rollUnlockedSlots', () => {
       style: { value: 'Coastal', locked: false },
       deliverable: { value: 'Sticker', locked: false },
       client: { value: 'Fish shop', locked: false },
+      company: { value: 'Northlane', locked: false },
     };
-    const result = rollUnlockedSlots(lists, slots, () => 0);
+    const result = rollUnlockedSlots(lists, slots, CORE_IDS, () => 0);
     expect(result.style).not.toBe('Coastal');
     expect(result.deliverable).not.toBe('Sticker');
     expect(result.client).not.toBe('Fish shop');
+  });
+
+  it('leaves a slot outside activeIds untouched, even unlocked', () => {
+    const slots: SlotsState = {
+      style: { value: 'Coastal', locked: false },
+      deliverable: { value: 'Sticker', locked: false },
+      client: { value: 'Fish shop', locked: false },
+      company: { value: 'Northlane', locked: false },
+    };
+    const result = rollUnlockedSlots(lists, slots, CORE_IDS, () => 0);
+    expect(result.company).toBe('Northlane');
+  });
+
+  it('rolls every slot in lists/slots by default', () => {
+    const slots: SlotsState = {
+      style: { value: 'Coastal', locked: false },
+      deliverable: { value: 'Sticker', locked: false },
+      client: { value: 'Fish shop', locked: false },
+      company: { value: 'Northlane', locked: false },
+    };
+    const result = rollUnlockedSlots(lists, slots);
+    expect(result.company).not.toBeNull();
   });
 });

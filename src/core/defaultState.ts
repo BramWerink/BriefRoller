@@ -21,5 +21,6 @@ export function createDefaultState(): PersistedStateV1 {
     history: [],
     themeId: DEFAULT_THEME_ID,
     pinned: false,
+    companyEnabled: true,
   };
 }

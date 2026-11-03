@@ -47,6 +47,17 @@ export function EditLists({ vm, actions, styles }: PanelProps) {
         ))}
       </div>
 
+      {tab === 'company' && (
+        <label className={styles.toggleRow}>
+          <input
+            type="checkbox"
+            checked={vm.companyEnabled}
+            onChange={(event) => actions.setCompanyEnabled(event.target.checked)}
+          />
+          Roll a company name with the brief
+        </label>
+      )}
+
       <form className={styles.addForm} onSubmit={handleSubmit}>
         <label htmlFor={inputId} className={styles.visuallyHidden}>
           Add a {label}

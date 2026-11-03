@@ -67,6 +67,7 @@ describe('persistence', () => {
     expect(result.history).toEqual([]);
     expect(result.themeId).toBe(defaults.themeId);
     expect(result.pinned).toBe(defaults.pinned);
+    expect(result.companyEnabled).toBe(defaults.companyEnabled);
   });
 
   it('moves saves on the old default theme to the current default, and keeps others', () => {
@@ -75,5 +76,50 @@ describe('persistence', () => {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ themeId: 'some-future-theme' }));
     expect(loadState().themeId).toBe('some-future-theme');
+  });
+
+  it('defaults companyEnabled to on, and respects a saved value', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({}));
+    expect(loadState().companyEnabled).toBe(true);
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ companyEnabled: false }));
+    expect(loadState().companyEnabled).toBe(false);
+  });
+
+  it('keeps a company-enabled history entry, and drops one with a non-string company', () => {
+    const state = createDefaultState();
+    state.history = [
+      {
+        id: 'a',
+        values: { style: 'Coastal', deliverable: 'Sticker', client: 'Bakery' },
+        rolledAt: 1,
+      },
+      {
+        id: 'b',
+        values: {
+          style: 'Coastal',
+          deliverable: 'Sticker',
+          client: 'Bakery',
+          company: 'Northlane',
+        },
+        rolledAt: 2,
+      },
+    ];
+    saveState(state);
+    expect(loadState().history).toHaveLength(2);
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        history: [
+          {
+            id: 'c',
+            values: { style: 'Coastal', deliverable: 'Sticker', client: 'Bakery', company: 5 },
+            rolledAt: 3,
+          },
+        ],
+      }),
+    );
+    expect(loadState().history).toEqual([]);
   });
 });

@@ -11,6 +11,7 @@
   --cabin-green: #276f5e;
   --cabin-gold: #b78426;
   --cabin-gray: #c2c2c3;
+  --cabin-plum: #7a4a6e;
   --cabin-stripe: rgb(255 255 255 / 0.1);
 
   /* Semantic */
@@ -29,6 +30,7 @@
   --br-slot-style: var(--cabin-red);
   --br-slot-deliverable: var(--cabin-green);
   --br-slot-client: var(--cabin-gold);
+  --br-slot-company: var(--cabin-plum);
   --br-focus-ring: var(--cabin-gold);
   --br-error-text: var(--cabin-red);
 

@@ -1,5 +1,5 @@
 import type { BriefListsState, SlotId, SlotsState } from './types';
-import { SLOT_IDS } from './types';
+import { activeSlotIds } from './types';
 
 const VOWEL_RE = /^[aeiou]/i;
 
@@ -14,9 +14,17 @@ export interface BriefSegment {
   slot?: SlotId;
 }
 
-/** The brief split into pieces, so a skin can style each slot's words. */
-export function buildBriefSegments(lists: BriefListsState, slots: SlotsState): BriefSegment[] {
-  const emptySlot = SLOT_IDS.find((id) => lists[id].length === 0);
+/**
+ * The brief split into pieces, so a skin can style each slot's words. With a company name,
+ * it's named ahead of the client, e.g. "...for Saltmarsh & Co., a fish shop".
+ */
+export function buildBriefSegments(
+  lists: BriefListsState,
+  slots: SlotsState,
+  companyEnabled = false,
+): BriefSegment[] {
+  const active = activeSlotIds(companyEnabled);
+  const emptySlot = active.find((id) => lists[id].length === 0);
   if (emptySlot) {
     return [{ text: `Add a ${emptySlot} first` }];
   }
@@ -24,21 +32,30 @@ export function buildBriefSegments(lists: BriefListsState, slots: SlotsState): B
   const style = slots.style.value;
   const deliverable = slots.deliverable.value;
   const client = slots.client.value;
-  if (!style || !deliverable || !client) {
+  const company = companyEnabled ? slots.company.value : null;
+  if (!style || !deliverable || !client || (companyEnabled && !company)) {
     return [];
   }
 
   const deliverableLower = deliverable.toLowerCase();
   const clientLower = client.toLowerCase();
 
-  return [
+  const segments: BriefSegment[] = [
     { text: `Design ${articleFor(deliverableLower)} ` },
     { text: deliverableLower, slot: 'deliverable' },
     { text: ' in ' },
     { text: style, slot: 'style' },
-    { text: ` style for ${articleFor(clientLower)} ` },
-    { text: clientLower, slot: 'client' },
+    { text: ' style for ' },
   ];
+
+  if (company) {
+    segments.push({ text: company, slot: 'company' }, { text: `, ${articleFor(clientLower)} ` });
+  } else {
+    segments.push({ text: articleFor(clientLower) + ' ' });
+  }
+  segments.push({ text: clientLower, slot: 'client' });
+
+  return segments;
 }
 
 /** The leading `maxLength` characters of `segments`, trimming the segment that straddles the cut. */
@@ -59,15 +76,20 @@ export function sliceBriefSegments(segments: BriefSegment[], maxLength: number):
   return result;
 }
 
-export function buildBriefSentence(lists: BriefListsState, slots: SlotsState): string {
-  return buildBriefSegments(lists, slots)
+export function buildBriefSentence(
+  lists: BriefListsState,
+  slots: SlotsState,
+  companyEnabled = false,
+): string {
+  return buildBriefSegments(lists, slots, companyEnabled)
     .map((segment) => segment.text)
     .join('');
 }
 
-/** Short history line, e.g. "Coastal sticker · fish shop". */
-export function formatHistoryLine(values: Record<SlotId, string>): string {
-  return `${values.style} ${values.deliverable.toLowerCase()} · ${values.client.toLowerCase()}`;
+/** Short history line, e.g. "Coastal sticker · Saltmarsh & Co. · fish shop". */
+export function formatHistoryLine(values: Partial<Record<SlotId, string>>): string {
+  const company = values.company ? ` · ${values.company}` : '';
+  return `${values.style} ${values.deliverable?.toLowerCase()}${company} · ${values.client?.toLowerCase()}`;
 }
 
 export function slotLabel(id: SlotId): string {
@@ -78,5 +100,7 @@ export function slotLabel(id: SlotId): string {
       return 'Deliverable';
     case 'client':
       return 'Client';
+    case 'company':
+      return 'Company';
   }
 }

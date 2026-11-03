@@ -1,4 +1,4 @@
-import { SLOT_IDS, slotLabel } from '../../core';
+import { activeSlotIds, slotLabel } from '../../core';
 import type { BriefRollerActions, BriefRollerViewModel } from '../../state/types';
 import { LockClosedIcon, LockOpenIcon } from './icons';
 import styles from './cabin.module.css';
@@ -14,7 +14,7 @@ interface Props {
 export function SlotCards({ vm, actions }: Props) {
   return (
     <ol className={styles.slots}>
-      {SLOT_IDS.map((id, index) => {
+      {activeSlotIds(vm.companyEnabled).map((id, index) => {
         const slot = vm.slots[id];
         const isEmptyList = vm.lists[id].length === 0;
         const label = slotLabel(id);

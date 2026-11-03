@@ -1,5 +1,6 @@
-import { Fragment, useLayoutEffect, useRef } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { BriefRollerActions, BriefRollerViewModel } from '../../state/types';
+import type { BriefSegment } from '../../core';
 import { sliceBriefSegments } from '../../core';
 import { useTypewriter } from '../shared/useTypewriter';
 import styles from './cabin.module.css';
@@ -24,8 +25,19 @@ interface Props {
 /** The brief sentence, each slot's words in that slot's colour. Clicking it copies the brief. */
 export function BriefCard({ vm, actions }: Props) {
   const cardRef = useRef<HTMLButtonElement>(null);
-  const revealLength = useTypewriter(vm.briefText);
-  const visibleSegments = sliceBriefSegments(vm.briefSegments, revealLength);
+
+  // While rolling, each slot settling changes vm.briefText/briefSegments in turn — hold the
+  // typewriter's input steady until every slot is done, so typing starts once, not per-slot.
+  const [settled, setSettled] = useState<{ text: string; segments: BriefSegment[] }>({
+    text: vm.briefText,
+    segments: vm.briefSegments,
+  });
+  useEffect(() => {
+    if (!vm.isRolling) setSettled({ text: vm.briefText, segments: vm.briefSegments });
+  }, [vm.isRolling, vm.briefText, vm.briefSegments]);
+
+  const revealLength = useTypewriter(settled.text);
+  const visibleSegments = sliceBriefSegments(settled.segments, revealLength);
 
   useLayoutEffect(() => {
     const card = cardRef.current;
@@ -39,7 +51,7 @@ export function BriefCard({ vm, actions }: Props) {
     };
     // Re-measure on every reveal tick too: short, mid-type text always fits, but the
     // size must still be right once typing reaches the full sentence.
-  }, [vm.briefText, revealLength]);
+  }, [settled.text, revealLength]);
 
   return (
     <button
@@ -51,7 +63,7 @@ export function BriefCard({ vm, actions }: Props) {
       onClick={() => void actions.copyBrief()}
     >
       <span className={styles.briefText} aria-live="polite">
-        {vm.briefSegments.length === 0 ? (
+        {settled.segments.length === 0 ? (
           <span className={styles.briefPlaceholder}>Press Roll for a brief</span>
         ) : (
           visibleSegments.map((segment, index) =>

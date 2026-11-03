@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
+  activeSlotIds,
   buildBriefSegments,
   buildBriefSentence,
   loadState,
@@ -20,6 +21,7 @@ const STAGGER_MS: Record<SlotId, number> = {
   style: 600,
   deliverable: 750,
   client: 900,
+  company: 1050,
 };
 const COPIED_FLASH_MS = 1400;
 
@@ -27,14 +29,15 @@ type Action =
   | { type: 'COMMIT_SLOT'; slot: SlotId; value: string | null }
   | { type: 'COMMIT_ALL'; values: Record<SlotId, string | null> }
   | { type: 'TOGGLE_LOCK'; slot: SlotId }
-  | { type: 'PUSH_HISTORY'; values: Record<SlotId, string>; id: string; rolledAt: number }
+  | { type: 'PUSH_HISTORY'; values: Partial<Record<SlotId, string>>; id: string; rolledAt: number }
   | { type: 'RESTORE_HISTORY'; id: string }
   | { type: 'CLEAR_HISTORY' }
   | { type: 'ADD_LIST_ITEM'; slot: SlotId; value: string }
   | { type: 'REMOVE_LIST_ITEM'; slot: SlotId; value: string }
   | { type: 'RESET_LIST'; slot: SlotId }
   | { type: 'SET_THEME'; id: string }
-  | { type: 'SET_PINNED'; pinned: boolean };
+  | { type: 'SET_PINNED'; pinned: boolean }
+  | { type: 'SET_COMPANY_ENABLED'; enabled: boolean };
 
 function reducer(state: PersistedStateV1, action: Action): PersistedStateV1 {
   switch (action.type) {
@@ -70,8 +73,10 @@ function reducer(state: PersistedStateV1, action: Action): PersistedStateV1 {
       const entry = state.history.find((item) => item.id === action.id);
       if (!entry) return state;
       const slots: SlotsState = { ...state.slots };
+      // Older or company-disabled entries have no company value; leave that slot as it is.
       SLOT_IDS.forEach((id) => {
-        slots[id] = { ...slots[id], value: entry.values[id] };
+        const value = entry.values[id];
+        if (value !== undefined) slots[id] = { ...slots[id], value };
       });
       return { ...state, slots };
     }
@@ -98,6 +103,8 @@ function reducer(state: PersistedStateV1, action: Action): PersistedStateV1 {
       return { ...state, themeId: action.id };
     case 'SET_PINNED':
       return { ...state, pinned: action.pinned };
+    case 'SET_COMPANY_ENABLED':
+      return { ...state, companyEnabled: action.enabled };
     default:
       return state;
   }
@@ -117,6 +124,7 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
     style: false,
     deliverable: false,
     client: false,
+    company: false,
   });
   const [flicker, setFlicker] = useState<Partial<Record<SlotId, string>>>({});
   const [justCopied, setJustCopied] = useState(false);
@@ -149,87 +157,108 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
     [],
   );
 
-  const settleRollValues = useCallback((finalValues: Record<SlotId, string | null>) => {
-    const complete = SLOT_IDS.every((id) => finalValues[id] !== null);
-    if (complete) {
-      apply({
-        type: 'PUSH_HISTORY',
-        values: finalValues as Record<SlotId, string>,
-        id: crypto.randomUUID(),
-        rolledAt: Date.now(),
-      });
-      setRollCount((count) => count + 1);
-    }
-  }, [apply]);
-
-  const roll = useCallback(() => {
-    if (rollingRef.current) return;
-
-    const current = stateRef.current;
-    const finalValues = rollUnlockedSlots(current.lists, current.slots);
-
-    if (prefersReducedMotion()) {
-      apply({ type: 'COMMIT_ALL', values: finalValues });
-      settleRollValues(finalValues);
-      return;
-    }
-
-    const animatingSlots = SLOT_IDS.filter(
-      (id) => !current.slots[id].locked && current.lists[id].length > 0,
-    );
-
-    if (animatingSlots.length === 0) {
-      apply({ type: 'COMMIT_ALL', values: finalValues });
-      settleRollValues(finalValues);
-      return;
-    }
-
-    setRollingSlots((prev) => {
-      const next = { ...prev };
-      animatingSlots.forEach((id) => {
-        next[id] = true;
-      });
-      return next;
-    });
-
-    rollingRef.current = true;
-    timers.current = [];
-    let remaining = animatingSlots.length;
-
-    animatingSlots.forEach((id) => {
-      const list = current.lists[id];
-      const flickerOnce = () => {
-        const randomItem = list[Math.floor(Math.random() * list.length)];
-        setFlicker((prev) => ({ ...prev, [id]: randomItem }));
-      };
-      flickerOnce();
-      const intervalId = window.setInterval(flickerOnce, FLICKER_INTERVAL_MS);
-      timers.current.push(intervalId);
-
-      const timeoutId = window.setTimeout(() => {
-        window.clearInterval(intervalId);
-        apply({ type: 'COMMIT_SLOT', slot: id, value: finalValues[id] });
-        setFlicker((prev) => {
-          const next = { ...prev };
-          delete next[id];
-          return next;
+  const settleRollValues = useCallback(
+    (finalValues: Record<SlotId, string | null>, activeIds: SlotId[]) => {
+      const complete = activeIds.every((id) => finalValues[id] !== null);
+      if (complete) {
+        const values: Partial<Record<SlotId, string>> = {};
+        activeIds.forEach((id) => {
+          values[id] = finalValues[id]!;
         });
-        setRollingSlots((prev) => ({ ...prev, [id]: false }));
+        apply({
+          type: 'PUSH_HISTORY',
+          values,
+          id: crypto.randomUUID(),
+          rolledAt: Date.now(),
+        });
+        setRollCount((count) => count + 1);
+      }
+    },
+    [apply],
+  );
 
-        remaining -= 1;
-        if (remaining === 0) {
-          rollingRef.current = false;
-          settleRollValues(finalValues);
-        }
-      }, STAGGER_MS[id]);
-      timers.current.push(timeoutId);
-    });
-  }, [apply, settleRollValues]);
+  /**
+   * Rolls `onlyIds` (default: every active, unlocked slot). Passing a narrower list — as the
+   * open-on-a-brief effect does for a newly-active slot — rerolls just those, leaving an
+   * already-set brief alone; completeness and history still cover every active slot.
+   */
+  const roll = useCallback(
+    (onlyIds?: SlotId[]) => {
+      if (rollingRef.current) return;
 
-  // Open on a brief instead of empty slots: roll once at start if a slot has no value yet.
+      const current = stateRef.current;
+      const fullActiveIds = activeSlotIds(current.companyEnabled);
+      const targetIds = onlyIds ?? fullActiveIds;
+      const finalValues = rollUnlockedSlots(current.lists, current.slots, targetIds);
+
+      if (prefersReducedMotion()) {
+        apply({ type: 'COMMIT_ALL', values: finalValues });
+        settleRollValues(finalValues, fullActiveIds);
+        return;
+      }
+
+      const animatingSlots = targetIds.filter(
+        (id) => !current.slots[id].locked && current.lists[id].length > 0,
+      );
+
+      if (animatingSlots.length === 0) {
+        apply({ type: 'COMMIT_ALL', values: finalValues });
+        settleRollValues(finalValues, fullActiveIds);
+        return;
+      }
+
+      setRollingSlots((prev) => {
+        const next = { ...prev };
+        animatingSlots.forEach((id) => {
+          next[id] = true;
+        });
+        return next;
+      });
+
+      rollingRef.current = true;
+      timers.current = [];
+      let remaining = animatingSlots.length;
+
+      animatingSlots.forEach((id) => {
+        const list = current.lists[id];
+        const flickerOnce = () => {
+          const randomItem = list[Math.floor(Math.random() * list.length)];
+          setFlicker((prev) => ({ ...prev, [id]: randomItem }));
+        };
+        flickerOnce();
+        const intervalId = window.setInterval(flickerOnce, FLICKER_INTERVAL_MS);
+        timers.current.push(intervalId);
+
+        const timeoutId = window.setTimeout(() => {
+          window.clearInterval(intervalId);
+          apply({ type: 'COMMIT_SLOT', slot: id, value: finalValues[id] });
+          setFlicker((prev) => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          });
+          setRollingSlots((prev) => ({ ...prev, [id]: false }));
+
+          remaining -= 1;
+          if (remaining === 0) {
+            rollingRef.current = false;
+            settleRollValues(finalValues, fullActiveIds);
+          }
+        }, STAGGER_MS[id]);
+        timers.current.push(timeoutId);
+      });
+    },
+    [apply, settleRollValues],
+  );
+
+  // Open on a brief instead of empty slots: fill in whichever active slots have no value yet
+  // (e.g. a newly enabled company, or a first-ever visit) without touching an already-set brief.
   useEffect(() => {
-    const { lists, slots } = stateRef.current;
-    if (SLOT_IDS.some((id) => slots[id].value === null && lists[id].length > 0)) roll();
+    const { lists, slots, companyEnabled } = stateRef.current;
+    const missing = activeSlotIds(companyEnabled).filter(
+      (id) => slots[id].value === null && lists[id].length > 0,
+    );
+    if (missing.length > 0) roll(missing);
   }, [roll]);
 
   const openPanel = useCallback((next: Panel) => setPanel(next), []);
@@ -239,15 +268,21 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
     [],
   );
 
-  const toggleLock = useCallback((slot: SlotId) => {
-    apply({ type: 'TOGGLE_LOCK', slot });
-  }, [apply]);
+  const toggleLock = useCallback(
+    (slot: SlotId) => {
+      apply({ type: 'TOGGLE_LOCK', slot });
+    },
+    [apply],
+  );
 
   const copyBrief = useCallback(async () => {
     if (rollingRef.current) return;
-    const { lists, slots } = stateRef.current;
-    if (!SLOT_IDS.every((id) => lists[id].length > 0 && slots[id].value !== null)) return;
-    const text = buildBriefSentence(lists, slots);
+    const { lists, slots, companyEnabled } = stateRef.current;
+    if (
+      !activeSlotIds(companyEnabled).every((id) => lists[id].length > 0 && slots[id].value !== null)
+    )
+      return;
+    const text = buildBriefSentence(lists, slots, companyEnabled);
     if (!text) return;
 
     try {
@@ -272,42 +307,67 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
     copyTimer.current = window.setTimeout(() => setJustCopied(false), COPIED_FLASH_MS);
   }, []);
 
-  const restoreFromHistory = useCallback((id: string) => {
-    apply({ type: 'RESTORE_HISTORY', id });
-  }, [apply]);
+  const restoreFromHistory = useCallback(
+    (id: string) => {
+      apply({ type: 'RESTORE_HISTORY', id });
+    },
+    [apply],
+  );
 
   const clearHistory = useCallback(() => {
     apply({ type: 'CLEAR_HISTORY' });
   }, [apply]);
 
-  const addListItem = useCallback((slot: SlotId, value: string) => {
-    const { result } = addListItemCore(stateRef.current.lists[slot], value);
-    if (result.ok) apply({ type: 'ADD_LIST_ITEM', slot, value });
-    return result;
-  }, [apply]);
+  const addListItem = useCallback(
+    (slot: SlotId, value: string) => {
+      const { result } = addListItemCore(stateRef.current.lists[slot], value);
+      if (result.ok) apply({ type: 'ADD_LIST_ITEM', slot, value });
+      return result;
+    },
+    [apply],
+  );
 
-  const removeListItem = useCallback((slot: SlotId, value: string) => {
-    apply({ type: 'REMOVE_LIST_ITEM', slot, value });
-  }, [apply]);
+  const removeListItem = useCallback(
+    (slot: SlotId, value: string) => {
+      apply({ type: 'REMOVE_LIST_ITEM', slot, value });
+    },
+    [apply],
+  );
 
-  const resetList = useCallback((slot: SlotId) => {
-    apply({ type: 'RESET_LIST', slot });
-  }, [apply]);
+  const resetList = useCallback(
+    (slot: SlotId) => {
+      apply({ type: 'RESET_LIST', slot });
+    },
+    [apply],
+  );
 
-  const setTheme = useCallback((id: string) => {
-    apply({ type: 'SET_THEME', id });
-  }, [apply]);
+  const setTheme = useCallback(
+    (id: string) => {
+      apply({ type: 'SET_THEME', id });
+    },
+    [apply],
+  );
 
-  const setPinned = useCallback(async (on: boolean) => {
-    if (!pinAdapter.canPin) return;
-    try {
-      await pinAdapter.setPinned(on);
-    } catch {
-      // Leave the stored state alone so the Pin key never shows a pin that didn't happen.
-      return;
-    }
-    apply({ type: 'SET_PINNED', pinned: on });
-  }, [apply]);
+  const setCompanyEnabled = useCallback(
+    (enabled: boolean) => {
+      apply({ type: 'SET_COMPANY_ENABLED', enabled });
+    },
+    [apply],
+  );
+
+  const setPinned = useCallback(
+    async (on: boolean) => {
+      if (!pinAdapter.canPin) return;
+      try {
+        await pinAdapter.setPinned(on);
+      } catch {
+        // Leave the stored state alone so the Pin key never shows a pin that didn't happen.
+        return;
+      }
+      apply({ type: 'SET_PINNED', pinned: on });
+    },
+    [apply],
+  );
 
   useEffect(() => {
     if (pinAdapter.canPin && stateRef.current.pinned) {
@@ -337,11 +397,14 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
     canPin: pinAdapter.canPin,
     isRolling,
     rollingSlots,
-    briefText: buildBriefSentence(state.lists, state.slots),
-    briefSegments: buildBriefSegments(state.lists, state.slots),
+    companyEnabled: state.companyEnabled,
+    briefText: buildBriefSentence(state.lists, state.slots, state.companyEnabled),
+    briefSegments: buildBriefSegments(state.lists, state.slots, state.companyEnabled),
     canCopy:
       !isRolling &&
-      SLOT_IDS.every((id) => state.lists[id].length > 0 && state.slots[id].value !== null),
+      activeSlotIds(state.companyEnabled).every(
+        (id) => state.lists[id].length > 0 && state.slots[id].value !== null,
+      ),
     rollCount,
     justCopied,
   };
@@ -353,6 +416,7 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
     roll,
     toggleLock,
     copyBrief,
+    setCompanyEnabled,
     restoreFromHistory,
     clearHistory,
     addListItem,

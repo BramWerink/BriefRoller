@@ -1,4 +1,5 @@
 import type { SlotId, SlotsState, BriefListsState } from './types';
+import { SLOT_IDS } from './types';
 
 export type RandomFn = () => number;
 
@@ -22,19 +23,20 @@ export function pickExcluding(
 }
 
 /**
- * Computes the next value for every unlocked slot (locked slots are left
- * untouched). Each unlocked slot's new value is drawn from its list,
- * excluding its current value, per `pickExcluding`.
+ * Computes the next value for every unlocked, active slot (locked slots, and
+ * slots not in `activeIds`, are left untouched). Each rolled slot's new value is
+ * drawn from its list, excluding its current value, per `pickExcluding`.
  */
 export function rollUnlockedSlots(
   lists: BriefListsState,
   slots: SlotsState,
+  activeIds: SlotId[] = SLOT_IDS,
   random: RandomFn = Math.random,
 ): Record<SlotId, string | null> {
   const result = {} as Record<SlotId, string | null>;
   (Object.keys(slots) as SlotId[]).forEach((slotId) => {
     const slot = slots[slotId];
-    if (slot.locked) {
+    if (slot.locked || !activeIds.includes(slotId)) {
       result[slotId] = slot.value;
       return;
     }

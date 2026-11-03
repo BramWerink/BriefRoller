@@ -108,6 +108,33 @@ export const DEFAULT_LISTS: BriefListsState = {
     'Coffee roaster',
     'Bowling alley',
   ],
+  company: [
+    'Northlane',
+    'Verve',
+    'Cobalt & Co.',
+    'Fernway',
+    'Hearth',
+    'Driftline',
+    'Lumen',
+    'Birchwood',
+    'Nimbus',
+    'Anchorpoint',
+    'Pallet',
+    'Sable',
+    'Greywing',
+    'Tenfold',
+    'Kindred',
+    'Rootstock',
+    'Haven Supply',
+    'Cinder',
+    'Oatmeal Studio',
+    'Marrow',
+    'Quiver',
+    'Fieldnote',
+    'Salt & Pine',
+    'Nestwork',
+    'Ember',
+  ],
 };
 
 export function cloneDefaultLists(): BriefListsState {
@@ -115,5 +142,6 @@ export function cloneDefaultLists(): BriefListsState {
     style: [...DEFAULT_LISTS.style],
     deliverable: [...DEFAULT_LISTS.deliverable],
     client: [...DEFAULT_LISTS.client],
+    company: [...DEFAULT_LISTS.company],
   };
 }

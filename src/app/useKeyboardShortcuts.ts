@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { SLOT_IDS } from '../core';
+import { activeSlotIds } from '../core';
 import type { BriefRollerActions, BriefRollerViewModel } from '../state/types';
 
 const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
@@ -23,7 +23,8 @@ export function useKeyboardShortcuts(vm: BriefRollerViewModel, actions: BriefRol
         return;
       }
 
-      const isTyping = target !== null && (TYPING_TAGS.has(target.tagName) || target.isContentEditable);
+      const isTyping =
+        target !== null && (TYPING_TAGS.has(target.tagName) || target.isContentEditable);
       if (isTyping) return;
 
       switch (event.key) {
@@ -37,9 +38,13 @@ export function useKeyboardShortcuts(vm: BriefRollerViewModel, actions: BriefRol
         case '1':
         case '2':
         case '3':
+        case '4': {
           event.preventDefault();
-          actions.toggleLock(SLOT_IDS[Number(event.key) - 1]);
+          const ids = activeSlotIds(vm.companyEnabled);
+          const id = ids[Number(event.key) - 1];
+          if (id) actions.toggleLock(id);
           return;
+        }
         case 'c':
         case 'C':
           event.preventDefault();

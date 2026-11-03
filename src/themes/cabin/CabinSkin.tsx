@@ -76,7 +76,7 @@ export function CabinSkin({ vm, actions, layout }: SkinProps) {
             className={styles.rollKey}
             data-pressed={vm.isRolling || undefined}
             aria-disabled={vm.isRolling}
-            onClick={actions.roll}
+            onClick={() => actions.roll()}
           >
             <DieIcon />
             <span className={styles.rollLabel}>Roll</span>

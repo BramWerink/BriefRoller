@@ -1,5 +1,5 @@
 import type { BriefListsState, HistoryEntry, PersistedStateV1, SlotsState } from './types';
-import { SLOT_IDS } from './types';
+import { CORE_SLOT_IDS, SLOT_IDS } from './types';
 import { createDefaultState } from './defaultState';
 import { cloneDefaultLists, DEFAULT_LISTS } from './defaultLists';
 import { mergeNewDefaults } from './lists';
@@ -70,9 +70,11 @@ function isValidHistoryEntry(value: unknown): value is HistoryEntry {
   if (typeof value !== 'object' || value === null) return false;
   const entry = value as Record<string, unknown>;
   if (typeof entry.id !== 'string' || typeof entry.rolledAt !== 'number') return false;
-  const values = entry.values;
+  const values = entry.values as Record<string, unknown> | null;
   if (typeof values !== 'object' || values === null) return false;
-  return SLOT_IDS.every((id) => typeof (values as Record<string, unknown>)[id] === 'string');
+  // The core slots are always rolled; company is only present on entries rolled while it was on.
+  if (!CORE_SLOT_IDS.every((id) => typeof values[id] === 'string')) return false;
+  return values.company === undefined || typeof values.company === 'string';
 }
 
 function sanitizeHistory(value: unknown): HistoryEntry[] {
@@ -106,6 +108,10 @@ export function loadState(): PersistedStateV1 {
           ? parsed.themeId
           : fallback.themeId,
       pinned: typeof parsed.pinned === 'boolean' ? parsed.pinned : fallback.pinned,
+      companyEnabled:
+        typeof parsed.companyEnabled === 'boolean'
+          ? parsed.companyEnabled
+          : fallback.companyEnabled,
     };
   } catch {
     return fallback;

@@ -27,11 +27,13 @@ function seedState(change: (state: PersistedStateV1) => void) {
   saveState(state);
 }
 
+/** Company is off here — these tests are about the core three slots; see "company name" below. */
 function seedRolledState() {
   seedState((state) => {
     state.slots.style = { value: 'Art Deco', locked: false };
     state.slots.deliverable = { value: 'Poster', locked: false };
     state.slots.client = { value: 'Ice cream van', locked: false };
+    state.companyEnabled = false;
   });
 }
 
@@ -73,7 +75,9 @@ describe.each(listThemes().map((theme) => theme.id))('App (%s theme)', (themeId)
 
     await user.click(screen.getByRole('button', { name: /copy/i }));
 
-    expect(writeText).toHaveBeenCalledWith('Design a poster in Art Deco style for an ice cream van');
+    expect(writeText).toHaveBeenCalledWith(
+      'Design a poster in Art Deco style for an ice cream van',
+    );
     expect(await screen.findByText('Copied!')).toBeInTheDocument();
   });
 
@@ -155,5 +159,63 @@ describe.each(listThemes().map((theme) => theme.id))('App (%s theme)', (themeId)
     const pin = screen.getByRole('button', { name: 'Pin' });
     expect(pin).toBeDisabled();
     expect(pin).toHaveAttribute('title', 'Available in the desktop app');
+  });
+
+  describe('company name', () => {
+    it('is on by default and lands in the brief, ahead of the client', () => {
+      seedState((state) => {
+        state.slots.style = { value: 'Art Deco', locked: false };
+        state.slots.deliverable = { value: 'Poster', locked: false };
+        state.slots.client = { value: 'Ice cream van', locked: false };
+        state.slots.company = { value: 'Northlane', locked: false };
+      });
+      render(<App />);
+
+      expect(screen.getByRole('button', { name: 'Lock company' })).toBeEnabled();
+      // "Northlane" appears twice: once in its own slot card, once inside the brief sentence.
+      expect(screen.getAllByText(/Northlane/).length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('fills in just the company on an existing brief, leaving the rest untouched', () => {
+      seedRolledState(); // companyEnabled: false here, so company was never rolled
+      seedState((state) => {
+        state.slots.style = { value: 'Art Deco', locked: false };
+        state.slots.deliverable = { value: 'Poster', locked: false };
+        state.slots.client = { value: 'Ice cream van', locked: false };
+        state.companyEnabled = true; // now on, but company itself is still unrolled
+      });
+      render(<App />);
+
+      // Each may appear twice: once in its slot card, once inside the brief sentence.
+      expect(screen.getAllByText('Art Deco').length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Poster|poster/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Ice cream van|ice cream van/).length).toBeGreaterThan(0);
+      expect(screen.getByRole('button', { name: 'Lock company' })).toBeEnabled();
+    });
+
+    it('locks the company name with the 4 key', async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      const lock = screen.getByRole('button', { name: 'Lock company' });
+      expect(lock).toHaveAttribute('aria-pressed', 'false');
+      await user.keyboard('4');
+      expect(lock).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('hides the card and drops it from the brief once switched off', async () => {
+      const user = userEvent.setup();
+      render(<App />);
+      expect(screen.getByRole('button', { name: 'Lock company' })).toBeInTheDocument();
+
+      await user.keyboard('e');
+      await user.click(screen.getByRole('tab', { name: 'Company' }));
+      const toggle = screen.getByRole('checkbox', { name: /roll a company name/i });
+      expect(toggle).toBeChecked();
+      await user.click(toggle);
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByRole('button', { name: 'Lock company' })).not.toBeInTheDocument();
+    });
   });
 });

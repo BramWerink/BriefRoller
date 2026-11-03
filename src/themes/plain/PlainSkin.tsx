@@ -96,7 +96,7 @@ export function PlainSkin({ vm, actions, layout }: SkinProps) {
           className={styles.rollKey}
           data-pressed={vm.isRolling || undefined}
           aria-disabled={vm.isRolling}
-          onClick={actions.roll}
+          onClick={() => actions.roll()}
         >
           Roll
         </button>
