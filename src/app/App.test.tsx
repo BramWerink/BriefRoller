@@ -33,7 +33,7 @@ function seedRolledState() {
     state.slots.style = { value: 'Art Deco', locked: false };
     state.slots.deliverable = { value: 'Poster', locked: false };
     state.slots.client = { value: 'Ice cream van', locked: false };
-    state.companyEnabled = false;
+    state.enabledSlots.company = false;
   });
 }
 
@@ -177,12 +177,12 @@ describe.each(listThemes().map((theme) => theme.id))('App (%s theme)', (themeId)
     });
 
     it('fills in just the company on an existing brief, leaving the rest untouched', () => {
-      seedRolledState(); // companyEnabled: false here, so company was never rolled
+      seedRolledState(); // enabledSlots.company: false here, so company was never rolled
       seedState((state) => {
         state.slots.style = { value: 'Art Deco', locked: false };
         state.slots.deliverable = { value: 'Poster', locked: false };
         state.slots.client = { value: 'Ice cream van', locked: false };
-        state.companyEnabled = true; // now on, but company itself is still unrolled
+        state.enabledSlots.company = true; // now on, but company itself is still unrolled
       });
       render(<App />);
 
@@ -210,12 +210,64 @@ describe.each(listThemes().map((theme) => theme.id))('App (%s theme)', (themeId)
 
       await user.keyboard('e');
       await user.click(screen.getByRole('tab', { name: 'Company' }));
-      const toggle = screen.getByRole('checkbox', { name: /roll a company name/i });
+      const toggle = screen.getByRole('checkbox', { name: /roll a company with the brief/i });
       expect(toggle).toBeChecked();
       await user.click(toggle);
       await user.keyboard('{Escape}');
 
       expect(screen.queryByRole('button', { name: 'Lock company' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('slot toggles', () => {
+    it('shows "Always included" instead of a toggle for Deliverable', async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.keyboard('e');
+      await user.click(screen.getByRole('tab', { name: 'Deliverable' }));
+
+      expect(screen.getByText('Always included in the brief.')).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    });
+
+    it('hides the style card and drops it from the brief once switched off', async () => {
+      seedRolledState();
+      const user = userEvent.setup();
+      render(<App />);
+      expect(screen.getByRole('button', { name: 'Lock style' })).toBeInTheDocument();
+
+      await user.keyboard('e');
+      await user.click(screen.getByRole('tab', { name: 'Style' }));
+      const toggle = screen.getByRole('checkbox', { name: /roll a style with the brief/i });
+      expect(toggle).toBeChecked();
+      await user.click(toggle);
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByRole('button', { name: 'Lock style' })).not.toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Brief' }).textContent).toContain(
+        'Design a poster for an ice cream van',
+      );
+    });
+
+    it('lets client and company both be off at once, leaving only Deliverable', async () => {
+      seedRolledState();
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.keyboard('e');
+      await user.click(screen.getByRole('tab', { name: 'Style' }));
+      await user.click(screen.getByRole('checkbox', { name: /roll a style with the brief/i }));
+      await user.click(screen.getByRole('tab', { name: 'Client' }));
+      await user.click(screen.getByRole('checkbox', { name: /roll a client with the brief/i }));
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByRole('button', { name: 'Lock style' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Lock client' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Lock deliverable' })).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Brief' }).textContent).toContain(
+        'Design a poster',
+      );
     });
   });
 });

@@ -1,6 +1,7 @@
 import type {
   AddListItemResult,
   BriefSegment,
+  EnabledSlots,
   HistoryEntry,
   SlotId,
   SlotsState,
@@ -19,8 +20,8 @@ export interface BriefRollerViewModel {
   canPin: boolean;
   isRolling: boolean;
   rollingSlots: Record<SlotId, boolean>;
-  /** Whether the brief also rolls a company name. */
-  companyEnabled: boolean;
+  /** Which slots currently take part in rolling and the brief; Deliverable is always true. */
+  enabledSlots: EnabledSlots;
   briefText: string;
   /** `briefText` in pieces, with each slot's words tagged, for skins that style them. */
   briefSegments: BriefSegment[];
@@ -42,7 +43,7 @@ export interface BriefRollerActions {
   addListItem(slot: SlotId, value: string): AddListItemResult;
   removeListItem(slot: SlotId, value: string): void;
   resetList(slot: SlotId): void;
-  setCompanyEnabled(enabled: boolean): void;
+  setSlotEnabled(slot: SlotId, enabled: boolean): void;
   setTheme(id: string): void;
   setPinned(on: boolean): Promise<void>;
 }

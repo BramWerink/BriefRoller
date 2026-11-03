@@ -14,7 +14,7 @@ interface Props {
 export function SlotCards({ vm, actions }: Props) {
   return (
     <ol className={styles.slots}>
-      {activeSlotIds(vm.companyEnabled).map((id, index) => {
+      {activeSlotIds(vm.enabledSlots).map((id, index) => {
         const slot = vm.slots[id];
         const isEmptyList = vm.lists[id].length === 0;
         const label = slotLabel(id);

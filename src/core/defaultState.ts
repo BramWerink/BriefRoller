@@ -1,4 +1,4 @@
-import type { PersistedStateV1, SlotsState } from './types';
+import type { EnabledSlots, PersistedStateV1, SlotsState } from './types';
 import { SLOT_IDS } from './types';
 import { cloneDefaultLists } from './defaultLists';
 
@@ -12,6 +12,14 @@ export function createDefaultSlots(): SlotsState {
   return slots;
 }
 
+export function createDefaultEnabledSlots(): EnabledSlots {
+  const enabledSlots = {} as EnabledSlots;
+  SLOT_IDS.forEach((id) => {
+    enabledSlots[id] = true;
+  });
+  return enabledSlots;
+}
+
 export function createDefaultState(): PersistedStateV1 {
   return {
     version: 1,
@@ -21,6 +29,6 @@ export function createDefaultState(): PersistedStateV1 {
     history: [],
     themeId: DEFAULT_THEME_ID,
     pinned: false,
-    companyEnabled: true,
+    enabledSlots: createDefaultEnabledSlots(),
   };
 }

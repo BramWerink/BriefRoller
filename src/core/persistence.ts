@@ -1,5 +1,11 @@
-import type { BriefListsState, HistoryEntry, PersistedStateV1, SlotsState } from './types';
-import { CORE_SLOT_IDS, SLOT_IDS } from './types';
+import type {
+  BriefListsState,
+  EnabledSlots,
+  HistoryEntry,
+  PersistedStateV1,
+  SlotsState,
+} from './types';
+import { REQUIRED_SLOT_ID, SLOT_IDS } from './types';
 import { createDefaultState } from './defaultState';
 import { cloneDefaultLists, DEFAULT_LISTS } from './defaultLists';
 import { mergeNewDefaults } from './lists';
@@ -72,14 +78,33 @@ function isValidHistoryEntry(value: unknown): value is HistoryEntry {
   if (typeof entry.id !== 'string' || typeof entry.rolledAt !== 'number') return false;
   const values = entry.values as Record<string, unknown> | null;
   if (typeof values !== 'object' || values === null) return false;
-  // The core slots are always rolled; company is only present on entries rolled while it was on.
-  if (!CORE_SLOT_IDS.every((id) => typeof values[id] === 'string')) return false;
-  return values.company === undefined || typeof values.company === 'string';
+  // Deliverable is always rolled; the rest are only present on entries rolled while on.
+  if (typeof values[REQUIRED_SLOT_ID] !== 'string') return false;
+  return SLOT_IDS.filter((id) => id !== REQUIRED_SLOT_ID).every(
+    (id) => values[id] === undefined || typeof values[id] === 'string',
+  );
 }
 
 function sanitizeHistory(value: unknown): HistoryEntry[] {
   if (!Array.isArray(value)) return [];
   return value.filter(isValidHistoryEntry);
+}
+
+/**
+ * Sanitizes the new per-slot shape; `legacyCompanyEnabled` carries forward an older save's
+ * single `companyEnabled` flag when `value` (the new `enabledSlots` field) isn't present yet.
+ */
+function sanitizeEnabledSlots(value: unknown, legacyCompanyEnabled: boolean | undefined): EnabledSlots {
+  const result = { style: true, deliverable: true, client: true, company: true } as EnabledSlots;
+  if (legacyCompanyEnabled !== undefined) result.company = legacyCompanyEnabled;
+  if (typeof value === 'object' && value !== null) {
+    const candidate = value as Record<string, unknown>;
+    SLOT_IDS.forEach((id) => {
+      if (typeof candidate[id] === 'boolean') result[id] = candidate[id] as boolean;
+    });
+  }
+  result[REQUIRED_SLOT_ID] = true;
+  return result;
 }
 
 export function loadState(): PersistedStateV1 {
@@ -108,10 +133,10 @@ export function loadState(): PersistedStateV1 {
           ? parsed.themeId
           : fallback.themeId,
       pinned: typeof parsed.pinned === 'boolean' ? parsed.pinned : fallback.pinned,
-      companyEnabled:
-        typeof parsed.companyEnabled === 'boolean'
-          ? parsed.companyEnabled
-          : fallback.companyEnabled,
+      enabledSlots: sanitizeEnabledSlots(
+        parsed.enabledSlots,
+        typeof parsed.companyEnabled === 'boolean' ? parsed.companyEnabled : undefined,
+      ),
     };
   } catch {
     return fallback;

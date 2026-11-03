@@ -10,6 +10,7 @@ import {
   addListItem as addListItemCore,
   removeListItem as removeListItemCore,
   resetList as resetListCore,
+  REQUIRED_SLOT_ID,
   SLOT_IDS,
 } from '../core';
 import type { PersistedStateV1, SlotId, SlotsState } from '../core';
@@ -37,7 +38,7 @@ type Action =
   | { type: 'RESET_LIST'; slot: SlotId }
   | { type: 'SET_THEME'; id: string }
   | { type: 'SET_PINNED'; pinned: boolean }
-  | { type: 'SET_COMPANY_ENABLED'; enabled: boolean };
+  | { type: 'SET_SLOT_ENABLED'; slot: SlotId; enabled: boolean };
 
 function reducer(state: PersistedStateV1, action: Action): PersistedStateV1 {
   switch (action.type) {
@@ -103,8 +104,13 @@ function reducer(state: PersistedStateV1, action: Action): PersistedStateV1 {
       return { ...state, themeId: action.id };
     case 'SET_PINNED':
       return { ...state, pinned: action.pinned };
-    case 'SET_COMPANY_ENABLED':
-      return { ...state, companyEnabled: action.enabled };
+    case 'SET_SLOT_ENABLED': {
+      if (action.slot === REQUIRED_SLOT_ID) return state;
+      return {
+        ...state,
+        enabledSlots: { ...state.enabledSlots, [action.slot]: action.enabled },
+      };
+    }
     default:
       return state;
   }
@@ -187,7 +193,7 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
       if (rollingRef.current) return;
 
       const current = stateRef.current;
-      const fullActiveIds = activeSlotIds(current.companyEnabled);
+      const fullActiveIds = activeSlotIds(current.enabledSlots);
       const targetIds = onlyIds ?? fullActiveIds;
       const finalValues = rollUnlockedSlots(current.lists, current.slots, targetIds);
 
@@ -254,8 +260,8 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
   // Open on a brief instead of empty slots: fill in whichever active slots have no value yet
   // (e.g. a newly enabled company, or a first-ever visit) without touching an already-set brief.
   useEffect(() => {
-    const { lists, slots, companyEnabled } = stateRef.current;
-    const missing = activeSlotIds(companyEnabled).filter(
+    const { lists, slots, enabledSlots } = stateRef.current;
+    const missing = activeSlotIds(enabledSlots).filter(
       (id) => slots[id].value === null && lists[id].length > 0,
     );
     if (missing.length > 0) roll(missing);
@@ -277,12 +283,12 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
 
   const copyBrief = useCallback(async () => {
     if (rollingRef.current) return;
-    const { lists, slots, companyEnabled } = stateRef.current;
+    const { lists, slots, enabledSlots } = stateRef.current;
     if (
-      !activeSlotIds(companyEnabled).every((id) => lists[id].length > 0 && slots[id].value !== null)
+      !activeSlotIds(enabledSlots).every((id) => lists[id].length > 0 && slots[id].value !== null)
     )
       return;
-    const text = buildBriefSentence(lists, slots, companyEnabled);
+    const text = buildBriefSentence(lists, slots, enabledSlots);
     if (!text) return;
 
     try {
@@ -348,9 +354,9 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
     [apply],
   );
 
-  const setCompanyEnabled = useCallback(
-    (enabled: boolean) => {
-      apply({ type: 'SET_COMPANY_ENABLED', enabled });
+  const setSlotEnabled = useCallback(
+    (slot: SlotId, enabled: boolean) => {
+      apply({ type: 'SET_SLOT_ENABLED', slot, enabled });
     },
     [apply],
   );
@@ -397,12 +403,12 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
     canPin: pinAdapter.canPin,
     isRolling,
     rollingSlots,
-    companyEnabled: state.companyEnabled,
-    briefText: buildBriefSentence(state.lists, state.slots, state.companyEnabled),
-    briefSegments: buildBriefSegments(state.lists, state.slots, state.companyEnabled),
+    enabledSlots: state.enabledSlots,
+    briefText: buildBriefSentence(state.lists, state.slots, state.enabledSlots),
+    briefSegments: buildBriefSegments(state.lists, state.slots, state.enabledSlots),
     canCopy:
       !isRolling &&
-      activeSlotIds(state.companyEnabled).every(
+      activeSlotIds(state.enabledSlots).every(
         (id) => state.lists[id].length > 0 && state.slots[id].value !== null,
       ),
     rollCount,
@@ -416,7 +422,7 @@ export function useBriefRoller(): [BriefRollerViewModel, BriefRollerActions] {
     roll,
     toggleLock,
     copyBrief,
-    setCompanyEnabled,
+    setSlotEnabled,
     restoreFromHistory,
     clearHistory,
     addListItem,

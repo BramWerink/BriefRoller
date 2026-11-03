@@ -1,4 +1,4 @@
-import type { BriefListsState, SlotId, SlotsState } from './types';
+import type { BriefListsState, EnabledSlots, SlotId, SlotsState } from './types';
 import { activeSlotIds } from './types';
 
 const VOWEL_RE = /^[aeiou]/i;
@@ -14,46 +14,67 @@ export interface BriefSegment {
   slot?: SlotId;
 }
 
+/** Style and Client on, Company off — the shape most callers and tests want by default. */
+const DEFAULT_ENABLED_SLOTS: EnabledSlots = {
+  style: true,
+  deliverable: true,
+  client: true,
+  company: false,
+};
+
 /**
- * The brief split into pieces, so a skin can style each slot's words. With a company name,
- * it's named ahead of the client, e.g. "...for Saltmarsh & Co., a fish shop".
+ * The brief split into pieces, so a skin can style each slot's words. Deliverable always
+ * appears; Style, Client and Company drop out of the sentence when switched off. With both
+ * a client and a company, the company is named first, e.g. "...for Saltmarsh & Co., a fish shop".
  */
 export function buildBriefSegments(
   lists: BriefListsState,
   slots: SlotsState,
-  companyEnabled = false,
+  enabledSlots: EnabledSlots = DEFAULT_ENABLED_SLOTS,
 ): BriefSegment[] {
-  const active = activeSlotIds(companyEnabled);
+  const active = activeSlotIds(enabledSlots);
   const emptySlot = active.find((id) => lists[id].length === 0);
   if (emptySlot) {
     return [{ text: `Add a ${emptySlot} first` }];
   }
 
-  const style = slots.style.value;
   const deliverable = slots.deliverable.value;
-  const client = slots.client.value;
-  const company = companyEnabled ? slots.company.value : null;
-  if (!style || !deliverable || !client || (companyEnabled && !company)) {
+  const style = enabledSlots.style ? slots.style.value : null;
+  const client = enabledSlots.client ? slots.client.value : null;
+  const company = enabledSlots.company ? slots.company.value : null;
+  if (
+    !deliverable ||
+    (enabledSlots.style && !style) ||
+    (enabledSlots.client && !client) ||
+    (enabledSlots.company && !company)
+  ) {
     return [];
   }
 
   const deliverableLower = deliverable.toLowerCase();
-  const clientLower = client.toLowerCase();
 
   const segments: BriefSegment[] = [
     { text: `Design ${articleFor(deliverableLower)} ` },
     { text: deliverableLower, slot: 'deliverable' },
-    { text: ' in ' },
-    { text: style, slot: 'style' },
-    { text: ' style for ' },
   ];
 
-  if (company) {
-    segments.push({ text: company, slot: 'company' }, { text: `, ${articleFor(clientLower)} ` });
-  } else {
-    segments.push({ text: articleFor(clientLower) + ' ' });
+  if (style) {
+    segments.push({ text: ' in ' }, { text: style, slot: 'style' }, { text: ' style' });
   }
-  segments.push({ text: clientLower, slot: 'client' });
+
+  if (company || client) {
+    segments.push({ text: ' for ' });
+    if (company) {
+      segments.push({ text: company, slot: 'company' });
+    }
+    if (client) {
+      const clientLower = client.toLowerCase();
+      segments.push(
+        { text: `${company ? ', ' : ''}${articleFor(clientLower)} ` },
+        { text: clientLower, slot: 'client' },
+      );
+    }
+  }
 
   return segments;
 }
@@ -79,17 +100,21 @@ export function sliceBriefSegments(segments: BriefSegment[], maxLength: number):
 export function buildBriefSentence(
   lists: BriefListsState,
   slots: SlotsState,
-  companyEnabled = false,
+  enabledSlots: EnabledSlots = DEFAULT_ENABLED_SLOTS,
 ): string {
-  return buildBriefSegments(lists, slots, companyEnabled)
+  return buildBriefSegments(lists, slots, enabledSlots)
     .map((segment) => segment.text)
     .join('');
 }
 
 /** Short history line, e.g. "Coastal sticker · Saltmarsh & Co. · fish shop". */
 export function formatHistoryLine(values: Partial<Record<SlotId, string>>): string {
-  const company = values.company ? ` · ${values.company}` : '';
-  return `${values.style} ${values.deliverable?.toLowerCase()}${company} · ${values.client?.toLowerCase()}`;
+  const styleDeliverable = [values.style, values.deliverable?.toLowerCase()]
+    .filter(Boolean)
+    .join(' ');
+  return [styleDeliverable, values.company, values.client?.toLowerCase()]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 export function slotLabel(id: SlotId): string {

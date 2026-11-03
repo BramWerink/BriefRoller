@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { MAX_ITEM_LENGTH, SLOT_IDS, slotLabel, type SlotId } from '../../core';
+import { MAX_ITEM_LENGTH, REQUIRED_SLOT_ID, SLOT_IDS, slotLabel, type SlotId } from '../../core';
 import type { PanelProps } from './types';
 
 export function EditLists({ vm, actions, styles }: PanelProps) {
@@ -47,14 +47,16 @@ export function EditLists({ vm, actions, styles }: PanelProps) {
         ))}
       </div>
 
-      {tab === 'company' && (
+      {tab === REQUIRED_SLOT_ID ? (
+        <p className={styles.muted}>Always included in the brief.</p>
+      ) : (
         <label className={styles.toggleRow}>
           <input
             type="checkbox"
-            checked={vm.companyEnabled}
-            onChange={(event) => actions.setCompanyEnabled(event.target.checked)}
+            checked={vm.enabledSlots[tab]}
+            onChange={(event) => actions.setSlotEnabled(tab, event.target.checked)}
           />
-          Roll a company name with the brief
+          Roll a {label} with the brief
         </label>
       )}
 

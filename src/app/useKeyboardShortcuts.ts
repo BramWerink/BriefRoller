@@ -40,7 +40,7 @@ export function useKeyboardShortcuts(vm: BriefRollerViewModel, actions: BriefRol
         case '3':
         case '4': {
           event.preventDefault();
-          const ids = activeSlotIds(vm.companyEnabled);
+          const ids = activeSlotIds(vm.enabledSlots);
           const id = ids[Number(event.key) - 1];
           if (id) actions.toggleLock(id);
           return;

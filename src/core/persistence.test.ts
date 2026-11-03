@@ -67,7 +67,7 @@ describe('persistence', () => {
     expect(result.history).toEqual([]);
     expect(result.themeId).toBe(defaults.themeId);
     expect(result.pinned).toBe(defaults.pinned);
-    expect(result.companyEnabled).toBe(defaults.companyEnabled);
+    expect(result.enabledSlots).toEqual(defaults.enabledSlots);
   });
 
   it('moves saves on the old default theme to the current default, and keeps others', () => {
@@ -78,12 +78,40 @@ describe('persistence', () => {
     expect(loadState().themeId).toBe('some-future-theme');
   });
 
-  it('defaults companyEnabled to on, and respects a saved value', () => {
+  it('defaults every slot to on, and respects saved per-slot values', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({}));
-    expect(loadState().companyEnabled).toBe(true);
+    expect(loadState().enabledSlots).toEqual({
+      style: true,
+      deliverable: true,
+      client: true,
+      company: true,
+    });
 
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ enabledSlots: { style: false, client: false, company: false } }),
+    );
+    expect(loadState().enabledSlots).toEqual({
+      style: false,
+      deliverable: true,
+      client: false,
+      company: false,
+    });
+  });
+
+  it('cannot switch off deliverable, even if the saved state says so', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ enabledSlots: { deliverable: false } }));
+    expect(loadState().enabledSlots.deliverable).toBe(true);
+  });
+
+  it('migrates an old companyEnabled flag into enabledSlots.company', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ companyEnabled: false }));
-    expect(loadState().companyEnabled).toBe(false);
+    expect(loadState().enabledSlots).toEqual({
+      style: true,
+      deliverable: true,
+      client: true,
+      company: false,
+    });
   });
 
   it('keeps a company-enabled history entry, and drops one with a non-string company', () => {

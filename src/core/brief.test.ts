@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { articleFor, buildBriefSegments, buildBriefSentence, formatHistoryLine } from './brief';
-import type { SlotsState, BriefListsState } from './types';
+import type { EnabledSlots, SlotsState, BriefListsState } from './types';
+
+const ALL_ON: EnabledSlots = { style: true, deliverable: true, client: true, company: true };
+const COMPANY_OFF: EnabledSlots = { style: true, deliverable: true, client: true, company: false };
+const STYLE_OFF: EnabledSlots = { style: false, deliverable: true, client: true, company: false };
+const CLIENT_OFF: EnabledSlots = { style: true, deliverable: true, client: false, company: false };
 
 describe('formatHistoryLine', () => {
   it('keeps style casing and lowercases deliverable and client', () => {
@@ -97,8 +102,30 @@ describe('buildBriefSentence', () => {
       client: { value: 'Fish shop', locked: false },
       company: { value: null, locked: false },
     };
-    expect(buildBriefSentence({ ...lists, company: [] }, slots, false)).toBe(
+    expect(buildBriefSentence({ ...lists, company: [] }, slots, COMPANY_OFF)).toBe(
       'Design a sticker in Coastal style for a fish shop',
+    );
+  });
+
+  it('drops the style clause when style is switched off', () => {
+    const slots: SlotsState = {
+      style: { value: null, locked: false },
+      deliverable: { value: 'Sticker', locked: false },
+      client: { value: 'Fish shop', locked: false },
+      company: { value: null, locked: false },
+    };
+    expect(buildBriefSentence(lists, slots, STYLE_OFF)).toBe('Design a sticker for a fish shop');
+  });
+
+  it('drops the client clause when client is switched off', () => {
+    const slots: SlotsState = {
+      style: { value: 'Coastal', locked: false },
+      deliverable: { value: 'Sticker', locked: false },
+      client: { value: null, locked: false },
+      company: { value: null, locked: false },
+    };
+    expect(buildBriefSentence(lists, slots, CLIENT_OFF)).toBe(
+      'Design a sticker in Coastal style',
     );
   });
 
@@ -109,7 +136,7 @@ describe('buildBriefSentence', () => {
       client: { value: 'Fish shop', locked: false },
       company: { value: 'Northlane', locked: false },
     };
-    expect(buildBriefSentence(lists, slots, true)).toBe(
+    expect(buildBriefSentence(lists, slots, ALL_ON)).toBe(
       'Design a sticker in Coastal style for Northlane, a fish shop',
     );
   });
@@ -121,7 +148,7 @@ describe('buildBriefSentence', () => {
       client: { value: 'Fish shop', locked: false },
       company: { value: null, locked: false },
     };
-    expect(buildBriefSentence(lists, slots, true)).toBe('');
+    expect(buildBriefSentence(lists, slots, ALL_ON)).toBe('');
   });
 
   it('prompts to add a company first when enabled and its list is empty', () => {
@@ -131,7 +158,9 @@ describe('buildBriefSentence', () => {
       client: { value: 'Fish shop', locked: false },
       company: { value: null, locked: false },
     };
-    expect(buildBriefSentence({ ...lists, company: [] }, slots, true)).toBe('Add a company first');
+    expect(buildBriefSentence({ ...lists, company: [] }, slots, ALL_ON)).toBe(
+      'Add a company first',
+    );
   });
 });
 
@@ -155,7 +184,8 @@ describe('buildBriefSegments', () => {
       { text: 'poster', slot: 'deliverable' },
       { text: ' in ' },
       { text: 'Art Deco', slot: 'style' },
-      { text: ' style for ' },
+      { text: ' style' },
+      { text: ' for ' },
       { text: 'an ' },
       { text: 'ice cream van', slot: 'client' },
     ]);
@@ -181,12 +211,13 @@ describe('buildBriefSegments', () => {
       client: { value: 'Ice cream van', locked: false },
       company: { value: 'Northlane', locked: false },
     };
-    expect(buildBriefSegments(lists, slots, true)).toEqual([
+    expect(buildBriefSegments(lists, slots, ALL_ON)).toEqual([
       { text: 'Design a ' },
       { text: 'poster', slot: 'deliverable' },
       { text: ' in ' },
       { text: 'Art Deco', slot: 'style' },
-      { text: ' style for ' },
+      { text: ' style' },
+      { text: ' for ' },
       { text: 'Northlane', slot: 'company' },
       { text: ', an ' },
       { text: 'ice cream van', slot: 'client' },

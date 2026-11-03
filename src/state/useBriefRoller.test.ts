@@ -10,14 +10,14 @@ function stubReducedMotion(matches: boolean) {
 /**
  * A saved brief in every active slot, so the hook doesn't roll on its own when it opens.
  * Company is off here — these tests are about the core three slots; see the dedicated
- * "company name" tests below for companyEnabled: true.
+ * "company name" tests below for enabledSlots.company: true.
  */
 function seedFilledSlots() {
   const state = createDefaultState();
   state.slots.style = { value: 'Coastal', locked: false };
   state.slots.deliverable = { value: 'Sticker', locked: false };
   state.slots.client = { value: 'Fish shop', locked: false };
-  state.companyEnabled = false;
+  state.enabledSlots.company = false;
   saveState(state);
 }
 
@@ -140,7 +140,7 @@ describe('useBriefRoller', () => {
     state.slots.style = { value: 'Coastal', locked: false };
     state.slots.deliverable = { value: 'Sticker', locked: false };
     state.slots.client = { value: 'Fish shop', locked: false };
-    state.companyEnabled = false;
+    state.enabledSlots.company = false;
     saveState(state);
 
     const { result } = renderHook(() => useBriefRoller());
@@ -171,7 +171,7 @@ describe('useBriefRoller', () => {
     state.slots.style = { value: 'Coastal', locked: true };
     state.slots.deliverable = { value: 'Sticker', locked: false };
     state.slots.client = { value: 'Fish shop', locked: false };
-    state.companyEnabled = false;
+    state.enabledSlots.company = false;
     state.history = [
       {
         id: 'h1',
