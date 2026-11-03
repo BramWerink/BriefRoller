@@ -2,7 +2,7 @@
 
 A tiny design-brief generator. Press Roll and get a random creative brief: a style, a deliverable, a client, and optionally a company name.
 
-![Brief Roller screenshot](docs/screenshot.jpg)
+<img src="docs/screenshot.jpg" alt="Brief Roller screenshot" width="420">
 
 ## How it works
 
@@ -16,9 +16,7 @@ A tiny design-brief generator. Press Roll and get a random creative brief: a sty
   - Switch Style, Client, or Company on or off. Deliverable always stays in the brief.
 - **Pin** keeps the window on top of others (desktop app only).
 
-<img src="docs/screenshot-mobile.jpg" alt="Brief Roller on a narrow window" width="300">
-
-![Editing lists](docs/screenshot-lists.jpg)
+<img src="docs/screenshot-mobile.jpg" alt="Brief Roller on a narrow window" width="190"> <img src="docs/screenshot-lists.jpg" alt="Editing lists" width="420">
 
 ## Slots
 
