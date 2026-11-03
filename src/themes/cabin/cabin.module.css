@@ -258,7 +258,6 @@
 
 .briefText [data-slot='company'] {
   color: var(--br-slot-company);
-  font-weight: 600;
 }
 
 .briefPlaceholder {
